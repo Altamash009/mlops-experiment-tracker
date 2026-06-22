@@ -6,7 +6,8 @@ from services.run_service import (
     end_run,
     get_runs,
     get_run_by_id,
-    compare_runs
+    compare_runs,
+    build_metric_comparison
 )
 
 runs_bp = Blueprint(
@@ -204,65 +205,29 @@ def compare_two_runs():
             int(run2_id)
         )
 
+        metric_comparison = (
+            build_metric_comparison(
+                run1,
+                run2
+            )
+        )
+
         return jsonify({
 
             "run_1": {
-
-                "id":
-                    run1.id,
-
+                "id": run1.id,
                 "experiment_name":
-                    run1.experiment_name,
-
-                "status":
-                    run1.status,
-
-                "parameters": {
-                    p.param_name:
-                    p.param_value
-
-                    for p in run1.parameters
-                },
-
-                "metrics": {
-                    m.metric_name:
-                    m.metric_value
-
-                    for m in run1.metrics
-                },
-
-                "artifact_count":
-                    len(run1.artifacts)
+                    run1.experiment_name
             },
 
             "run_2": {
-
-                "id":
-                    run2.id,
-
+                "id": run2.id,
                 "experiment_name":
-                    run2.experiment_name,
+                    run2.experiment_name
+            },
 
-                "status":
-                    run2.status,
-
-                "parameters": {
-                    p.param_name:
-                    p.param_value
-
-                    for p in run2.parameters
-                },
-
-                "metrics": {
-                    m.metric_name:
-                    m.metric_value
-
-                    for m in run2.metrics
-                },
-
-                "artifact_count":
-                    len(run2.artifacts)
-            }
+            "metric_comparison":
+                metric_comparison
         })
 
     except ValueError as e:

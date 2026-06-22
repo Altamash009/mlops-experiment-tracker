@@ -100,3 +100,74 @@ def compare_runs(
         )
 
     return run1, run2
+
+
+# Function to build a comparison of metrics between two runs and determine the winner for each metric
+def build_metric_comparison(
+    run1,
+    run2
+):
+
+    comparison = {}
+
+    run1_metrics = {
+        metric.metric_name:
+        metric.metric_value
+
+        for metric in run1.metrics
+    }
+
+    run2_metrics = {
+        metric.metric_name:
+        metric.metric_value
+
+        for metric in run2.metrics
+    }
+
+    metric_names = set(
+        run1_metrics.keys()
+    ).union(
+        run2_metrics.keys()
+    )
+
+    for metric_name in metric_names:
+
+        value1 = run1_metrics.get(
+            metric_name
+        )
+
+        value2 = run2_metrics.get(
+            metric_name
+        )
+
+        winner = None
+
+        if (
+            value1 is not None
+            and value2 is not None
+        ):
+
+            if value1 > value2:
+                winner = "run1"
+
+            elif value2 > value1:
+                winner = "run2"
+
+            else:
+                winner = "tie"
+
+        comparison[
+            metric_name
+        ] = {
+
+            "run1":
+                value1,
+
+            "run2":
+                value2,
+
+            "winner":
+                winner
+        }
+
+    return comparison
