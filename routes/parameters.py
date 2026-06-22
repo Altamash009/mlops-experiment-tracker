@@ -37,6 +37,11 @@ def create_parameter():
             "message": "Parameter logged",
             "id": parameter.id
         })
+    except ValueError as e:
+
+        return jsonify({
+            "error": str(e)
+        }), 400
 
     finally:
         db.close()

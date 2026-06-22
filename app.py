@@ -4,6 +4,7 @@ from routes.parameters import (
     parameters_bp
 )
 from routes.metrics import metrics_bp
+import models
 
 app = Flask(__name__)
 

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from models.database import Base
-
+from sqlalchemy.orm import relationship
 
 class Parameter(Base):
     __tablename__ = "parameters"
@@ -21,4 +21,9 @@ class Parameter(Base):
     param_value = Column(
         String,
         nullable=False
+    )
+
+    run = relationship(
+        "Run",
+        back_populates="parameters"
     )

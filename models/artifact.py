@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from models.database import Base
+from sqlalchemy.orm import relationship
 
 
 class Artifact(Base):
@@ -26,4 +27,9 @@ class Artifact(Base):
     file_type = Column(
         String,
         nullable=True
+    )
+
+    run = relationship(
+        "Run",
+        back_populates="artifacts"
     )

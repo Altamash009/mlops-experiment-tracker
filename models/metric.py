@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from models.database import Base
 from datetime import datetime
-
+from sqlalchemy.orm import relationship
 
 class Metric(Base):
     __tablename__ = "metrics"
@@ -27,4 +27,9 @@ class Metric(Base):
     timestamp = Column(
         DateTime,
         default=datetime.utcnow
+    )
+
+    run = relationship(
+        "Run",
+        back_populates="metrics"
     )

@@ -37,6 +37,11 @@ def create_metric():
             "message": "Metric logged",
             "id": metric.id
         })
+    except ValueError as e:
+
+        return jsonify({
+            "error": str(e)
+        }), 400
 
     finally:
         db.close()
