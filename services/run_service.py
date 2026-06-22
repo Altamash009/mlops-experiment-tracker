@@ -69,3 +69,34 @@ def get_run_by_id(db, run_id):
     )
 
     return run
+
+# Function to compare two runs by their IDs and return them if they exist in the database
+def compare_runs(
+    db,
+    run1_id,
+    run2_id
+):
+
+    run1 = (
+        db.query(Run)
+        .filter(Run.id == run1_id)
+        .first()
+    )
+
+    run2 = (
+        db.query(Run)
+        .filter(Run.id == run2_id)
+        .first()
+    )
+
+    if not run1:
+        raise ValueError(
+            f"Run {run1_id} not found"
+        )
+
+    if not run2:
+        raise ValueError(
+            f"Run {run2_id} not found"
+        )
+
+    return run1, run2

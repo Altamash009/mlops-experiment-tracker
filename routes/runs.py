@@ -5,7 +5,8 @@ from services.run_service import (
     create_run,
     end_run,
     get_runs,
-    get_run_by_id
+    get_run_by_id,
+    compare_runs
 )
 
 runs_bp = Blueprint(
@@ -168,4 +169,108 @@ def get_run(run_id):
         })
 
     finally:
+        db.close()
+
+
+# API to compare two runs by their IDs and return their details side by side
+@runs_bp.route(
+    "/compare",
+    methods=["GET"]
+)
+def compare_two_runs():
+
+    run1_id = request.args.get(
+        "run1"
+    )
+
+    run2_id = request.args.get(
+        "run2"
+    )
+
+    if not run1_id or not run2_id:
+
+        return jsonify({
+            "error":
+            "run1 and run2 are required"
+        }), 400
+
+    db = SessionLocal()
+
+    try:
+
+        run1, run2 = compare_runs(
+            db,
+            int(run1_id),
+            int(run2_id)
+        )
+
+        return jsonify({
+
+            "run_1": {
+
+                "id":
+                    run1.id,
+
+                "experiment_name":
+                    run1.experiment_name,
+
+                "status":
+                    run1.status,
+
+                "parameters": {
+                    p.param_name:
+                    p.param_value
+
+                    for p in run1.parameters
+                },
+
+                "metrics": {
+                    m.metric_name:
+                    m.metric_value
+
+                    for m in run1.metrics
+                },
+
+                "artifact_count":
+                    len(run1.artifacts)
+            },
+
+            "run_2": {
+
+                "id":
+                    run2.id,
+
+                "experiment_name":
+                    run2.experiment_name,
+
+                "status":
+                    run2.status,
+
+                "parameters": {
+                    p.param_name:
+                    p.param_value
+
+                    for p in run2.parameters
+                },
+
+                "metrics": {
+                    m.metric_name:
+                    m.metric_value
+
+                    for m in run2.metrics
+                },
+
+                "artifact_count":
+                    len(run2.artifacts)
+            }
+        })
+
+    except ValueError as e:
+
+        return jsonify({
+            "error": str(e)
+        }), 404
+
+    finally:
+
         db.close()
