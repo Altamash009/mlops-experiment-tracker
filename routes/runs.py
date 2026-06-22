@@ -7,7 +7,8 @@ from services.run_service import (
     get_runs,
     get_run_by_id,
     compare_runs,
-    build_metric_comparison
+    build_metric_comparison,
+    get_best_run
 )
 
 runs_bp = Blueprint(
@@ -228,6 +229,60 @@ def compare_two_runs():
 
             "metric_comparison":
                 metric_comparison
+        })
+
+    except ValueError as e:
+
+        return jsonify({
+            "error": str(e)
+        }), 404
+
+    finally:
+
+        db.close()
+
+# API endpoint to get the best run based on a specific metric
+@runs_bp.route(
+    "/best",
+    methods=["GET"]
+)
+def best_run():
+
+    metric_name = request.args.get(
+        "metric"
+    )
+
+    if not metric_name:
+
+        return jsonify({
+            "error":
+            "metric required"
+        }), 400
+
+    db = SessionLocal()
+
+    try:
+
+        best_metric = get_best_run(
+            db,
+            metric_name
+        )
+
+        run = best_metric.run
+
+        return jsonify({
+
+            "run_id":
+                run.id,
+
+            "experiment_name":
+                run.experiment_name,
+
+            "metric":
+                metric_name,
+
+            "value":
+                best_metric.metric_value
         })
 
     except ValueError as e:

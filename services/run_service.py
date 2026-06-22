@@ -1,5 +1,9 @@
 from models.run import Run
 from datetime import datetime
+from models.metric import Metric
+from utils.metric_rules import (
+    METRIC_RULES
+)
 
 # Function to create a new run in the database 
 def create_run(db, experiment_name):
@@ -171,3 +175,46 @@ def build_metric_comparison(
         }
 
     return comparison
+
+# Function to get the best run based on a specific metric and its associated rule (higher or lower is better)
+def get_best_run(
+    db,
+    metric_name
+):
+
+    metrics = (
+        db.query(Metric)
+        .filter(
+            Metric.metric_name
+            == metric_name
+        )
+        .all()
+    )
+
+    if not metrics:
+        raise ValueError(
+            "Metric not found"
+        )
+
+    rule = METRIC_RULES.get(
+        metric_name,
+        "higher"
+    )
+
+    if rule == "higher":
+
+        best_metric = max(
+            metrics,
+            key=lambda m:
+            m.metric_value
+        )
+
+    else:
+
+        best_metric = min(
+            metrics,
+            key=lambda m:
+            m.metric_value
+        )
+
+    return best_metric
