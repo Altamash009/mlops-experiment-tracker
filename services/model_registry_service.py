@@ -79,9 +79,31 @@ def promote_model(
             "Already in final stage"
         )
 
-    model.stage = MODEL_STAGES[
+    next_stage = MODEL_STAGES[
         current_index + 1
     ]
+
+    if next_stage == "Production":
+
+        production_models = (
+            db.query(ModelRegistry)
+            .filter(
+                ModelRegistry.model_name
+                == model.model_name,
+
+                ModelRegistry.stage
+                == "Production"
+            )
+            .all()
+        )
+
+        for prod_model in production_models:
+
+            prod_model.stage = (
+                "Archived"
+            )
+
+    model.stage = next_stage
 
     db.commit()
 
@@ -90,12 +112,19 @@ def promote_model(
     return model
 
 # Function to get the current production model from the model registry
-def get_production_model(db):
+def get_production_model(
+    db,
+    model_name
+):
 
     model = (
         db.query(ModelRegistry)
         .filter(
-            ModelRegistry.stage == "Production"
+            ModelRegistry.model_name
+            == model_name,
+
+            ModelRegistry.stage
+            == "Production"
         )
         .first()
     )

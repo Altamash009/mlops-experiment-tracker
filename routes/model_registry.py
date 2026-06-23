@@ -111,17 +111,20 @@ def promote_registry_model(
 
 # Route to get the production model from the model registry
 @registry_bp.route(
-    "/production",
+    "/production/<string:model_name>",
     methods=["GET"]
 )
-def production_model():
+def production_model(
+    model_name
+):
 
     db = SessionLocal()
 
     try:
 
         model = get_production_model(
-            db
+            db,
+            model_name
         )
 
         return jsonify({
@@ -149,5 +152,4 @@ def production_model():
         }), 404
 
     finally:
-
         db.close()
