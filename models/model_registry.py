@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from models.database import Base
 from datetime import datetime
+from sqlalchemy.orm import relationship
 
 
 class ModelRegistry(Base):
@@ -21,6 +22,10 @@ class ModelRegistry(Base):
     run_id = Column(
         Integer,
         ForeignKey("runs.id")
+    )
+
+    run = relationship(
+        "Run"
     )
 
     stage = Column(

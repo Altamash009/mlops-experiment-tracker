@@ -5,6 +5,7 @@ from routes.parameters import (
 )
 from routes.metrics import metrics_bp
 from routes.artifacts import artifacts_bp
+from routes.model_registry import registry_bp
 import models
 
 app = Flask(__name__)
@@ -27,6 +28,11 @@ app.register_blueprint(
 app.register_blueprint(
     artifacts_bp,
     url_prefix="/artifacts"
+)
+
+app.register_blueprint(
+    registry_bp,
+    url_prefix="/registry"
 )
 
 @app.route("/")

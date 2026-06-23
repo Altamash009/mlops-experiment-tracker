@@ -54,3 +54,7 @@ class Run(Base):
         back_populates="run",
         cascade="all, delete-orphan"
     )
+
+    registered_models = relationship(
+        "ModelRegistry"
+    )
