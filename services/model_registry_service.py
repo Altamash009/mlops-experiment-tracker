@@ -135,3 +135,78 @@ def get_production_model(
         )
 
     return model
+
+# Function to get the model history from the model registry
+def get_model_history(
+    db,
+    model_name
+):
+
+    models = (
+        db.query(ModelRegistry)
+        .filter(
+            ModelRegistry.model_name
+            == model_name
+        )
+        .order_by(
+            ModelRegistry.created_at
+        )
+        .all()
+    )
+
+    if not models:
+        raise ValueError(
+            "Model not found"
+        )
+
+    return models
+
+
+# Function to rollback a model to the previous stage in the model registry
+def rollback_model(
+    db,
+    model_id
+):
+
+    target_model = (
+        db.query(ModelRegistry)
+        .filter(
+            ModelRegistry.id == model_id
+        )
+        .first()
+    )
+
+    if not target_model:
+        raise ValueError(
+            "Model not found"
+        )
+
+    current_production = (
+        db.query(ModelRegistry)
+        .filter(
+            ModelRegistry.model_name
+            == target_model.model_name,
+
+            ModelRegistry.stage
+            == "Production"
+        )
+        .first()
+    )
+
+    if current_production:
+
+        current_production.stage = (
+            "Archived"
+        )
+
+    target_model.stage = (
+        "Production"
+    )
+
+    db.commit()
+
+    db.refresh(
+        target_model
+    )
+
+    return target_model
