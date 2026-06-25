@@ -218,7 +218,8 @@ def rollback_model(
 def get_leaderboard(
     db,
     model_name,
-    metric_name
+    metric_name,
+    top_n=None
 ):
 
     models = (
@@ -290,5 +291,8 @@ def get_leaderboard(
     ):
 
         item["rank"] = idx
+
+    if top_n is not None:
+        leaderboard = leaderboard[:top_n]
 
     return leaderboard

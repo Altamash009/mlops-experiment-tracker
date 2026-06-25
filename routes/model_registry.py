@@ -282,11 +282,23 @@ def leaderboard(
         "metric"
     )
 
+    top_n = request.args.get(
+        "top",
+        type=int
+    )
+
     if not metric_name:
 
         return jsonify({
             "error":
             "metric required"
+        }), 400
+    
+    if top_n is not None and top_n <= 0:
+
+        return jsonify({
+            "error":
+            "top must be greater than 0"
         }), 400
 
     db = SessionLocal()
@@ -296,7 +308,8 @@ def leaderboard(
         result = get_leaderboard(
             db,
             model_name,
-            metric_name
+            metric_name,
+            top_n
         )
 
         return jsonify(
