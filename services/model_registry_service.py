@@ -1,11 +1,13 @@
 from models.model_registry import (
     ModelRegistry
 )
+from utils.metric_rules import METRIC_RULES
 from utils.model_stages import (
     MODEL_STAGES
 )
 
 from models.run import Run
+from models.metric import Metric
 
 # Function to register a model in the model registry
 def register_model(
@@ -210,3 +212,83 @@ def rollback_model(
     )
 
     return target_model
+
+
+# Function to get the leaderboard of models based on a specific metric
+def get_leaderboard(
+    db,
+    model_name,
+    metric_name
+):
+
+    models = (
+        db.query(ModelRegistry)
+        .filter(
+            ModelRegistry.model_name
+            == model_name
+        )
+        .all()
+    )
+
+    leaderboard = []
+
+    for model in models:
+
+        run = model.run
+
+        if not run:
+            continue
+
+        metric_value = None
+
+        for metric in run.metrics:
+
+            if (
+                metric.metric_name
+                == metric_name
+            ):
+
+                metric_value = (
+                    metric.metric_value
+                )
+
+                break
+
+        if metric_value is None:
+            continue
+
+        leaderboard.append({
+
+            "version":
+                model.version,
+
+            "stage":
+                model.stage,
+
+            metric_name:
+                metric_value
+        })
+
+    rule = METRIC_RULES.get(
+        metric_name,
+        "higher"
+    )
+
+    leaderboard.sort(
+
+        key=lambda x:
+            x[metric_name],
+
+        reverse=(
+            rule == "higher"
+        )
+    )
+
+    for idx, item in enumerate(
+        leaderboard,
+        start=1
+    ):
+
+        item["rank"] = idx
+
+    return leaderboard

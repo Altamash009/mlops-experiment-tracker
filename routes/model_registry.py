@@ -11,7 +11,8 @@ from services.model_registry_service import (
     promote_model,
     get_production_model,
     get_model_history,
-    rollback_model
+    rollback_model,
+    get_leaderboard
 )
 
 registry_bp = Blueprint(
@@ -262,6 +263,45 @@ def rollback(
             "error":
             str(e)
         }), 404
+
+    finally:
+
+        db.close()
+
+
+# Route to get the leaderboard of models based on a specific metric
+@registry_bp.route(
+    "/leaderboard/<string:model_name>",
+    methods=["GET"]
+)
+def leaderboard(
+    model_name
+):
+
+    metric_name = request.args.get(
+        "metric"
+    )
+
+    if not metric_name:
+
+        return jsonify({
+            "error":
+            "metric required"
+        }), 400
+
+    db = SessionLocal()
+
+    try:
+
+        result = get_leaderboard(
+            db,
+            model_name,
+            metric_name
+        )
+
+        return jsonify(
+            result
+        )
 
     finally:
 
