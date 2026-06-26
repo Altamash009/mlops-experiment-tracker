@@ -12,7 +12,8 @@ from models.database import SessionLocal
 from services.artifact_service import (
     log_artifact,
     upload_artifact,
-    get_artifact_by_id
+    get_artifact_by_id,
+    get_latest_artifact
 )
 
 artifacts_bp = Blueprint(
@@ -137,6 +138,51 @@ def download_artifact(artifact_id):
 
             return jsonify({
                 "error": "Artifact file missing from storage"
+            }), 404
+
+        return send_file(
+            artifact.storage_uri,
+            as_attachment=True,
+            download_name=artifact.file_name
+        )
+
+    finally:
+
+        db.close()
+
+
+# Route to download the latest version of an artifact file
+@artifacts_bp.route(
+    "/latest/<int:run_id>/<path:file_name>",
+    methods=["GET"]
+)
+def download_latest_artifact(
+    run_id,
+    file_name
+):
+
+    db = SessionLocal()
+
+    try:
+
+        artifact = get_latest_artifact(
+            db,
+            run_id,
+            file_name
+        )
+
+        if not artifact:
+
+            return jsonify({
+                "error": "Artifact not found"
+            }), 404
+
+        if not os.path.exists(
+            artifact.storage_uri
+        ):
+
+            return jsonify({
+                "error": "Artifact missing from storage"
             }), 404
 
         return send_file(

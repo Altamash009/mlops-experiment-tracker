@@ -73,9 +73,19 @@ def upload_artifact(
         uploaded_file.filename
     )
 
+    version = get_next_artifact_version(
+        db,
+        run_id,
+        filename
+    )
+
+    storage_filename = (
+        f"v{version}_{filename}"
+    )
+
     storage_path = os.path.join(
         "artifacts_storage",
-        filename
+        storage_filename
     )
 
     uploaded_file.save(
@@ -94,7 +104,7 @@ def upload_artifact(
         file_type=filename.split(".")[-1],
         storage_type="LOCAL",
         storage_uri=storage_path,
-        artifact_version=1,
+        artifact_version=version,
         file_size=file_size,
         checksum=checksum
     )
@@ -117,6 +127,50 @@ def get_artifact_by_id(
         db.query(Artifact)
         .filter(
             Artifact.id == artifact_id
+        )
+        .first()
+    )
+
+# Function to get the next artifact version for a given run and file name
+def get_next_artifact_version(
+    db,
+    run_id,
+    file_name
+):
+
+    latest = (
+        db.query(Artifact)
+        .filter(
+            Artifact.run_id == run_id,
+            Artifact.file_name == file_name
+        )
+        .order_by(
+            Artifact.artifact_version.desc()
+        )
+        .first()
+    )
+
+    if latest:
+
+        return latest.artifact_version + 1
+
+    return 1
+
+# Function to get the latest artifact for a given run and file name
+def get_latest_artifact(
+    db,
+    run_id,
+    file_name
+):
+
+    return (
+        db.query(Artifact)
+        .filter(
+            Artifact.run_id == run_id,
+            Artifact.file_name == file_name
+        )
+        .order_by(
+            Artifact.artifact_version.desc()
         )
         .first()
     )
