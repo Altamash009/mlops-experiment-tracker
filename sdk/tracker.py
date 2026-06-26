@@ -1,5 +1,5 @@
 import requests
-
+import os
 
 class ExperimentTracker:
 
@@ -9,6 +9,7 @@ class ExperimentTracker:
     ):
 
         self.base_url = base_url
+        self.current_run = None
 
     def start_run(
         self,
@@ -26,19 +27,23 @@ class ExperimentTracker:
         )
 
         response.raise_for_status()
-        return response.json()
+        run = response.json()
+
+        self.current_run = run["run_id"]
+
+        return run
     
 
     def log_param(
-
         self,
-
-        run_id,
-
         param_name,
-
         param_value
     ):
+        if self.current_run is None:
+
+            raise RuntimeError(
+                "No active run. Call start_run() first."
+            )
 
         response = requests.post(
 
@@ -47,7 +52,7 @@ class ExperimentTracker:
             json={
 
                 "run_id":
-                    run_id,
+                    self.current_run,
 
                 "param_name":
                     param_name,
@@ -62,15 +67,15 @@ class ExperimentTracker:
     
 
     def log_metric(
-
         self,
-
-        run_id,
-
         metric_name,
-
         metric_value
     ):
+        if self.current_run is None:
+
+            raise RuntimeError(
+                "No active run. Call start_run() first."
+            )
 
         response = requests.post(
 
@@ -79,7 +84,7 @@ class ExperimentTracker:
             json={
 
                 "run_id":
-                    run_id,
+                    self.current_run,
 
                 "metric_name":
                     metric_name,
@@ -92,14 +97,59 @@ class ExperimentTracker:
         response.raise_for_status()
         return response.json()
     
-    def end_run(
+    def log_artifact(
         self,
-        run_id
+        file_path
     ):
 
+        if self.current_run is None:
+
+            raise RuntimeError(
+                "No active run. Call start_run() first."
+            )
+
+        if not os.path.exists(file_path):
+
+            raise FileNotFoundError(
+                f"{file_path} does not exist."
+            )
+
+        with open(file_path, "rb") as file:
+
+            files = {
+                "file": file
+            }
+
+            data = {
+                "run_id": self.current_run
+            }
+
+            response = requests.post(
+                f"{self.base_url}/artifacts/upload",
+                files=files,
+                data=data
+            )
+
+        response.raise_for_status()
+
+        return response.json()
+    
+    def end_run(self):
+
+        if self.current_run is None:
+
+            raise RuntimeError(
+                "No active run. Call start_run() first."
+            )
+
         response = requests.post(
-            f"{self.base_url}/runs/end/{run_id}"
+            f"{self.base_url}/runs/end/{self.current_run}"
         )
 
-        response.raise_for_status() 
-        return response.json()
+        result = response.json()
+
+        # Clear the active run only after a successful API call
+        if response.status_code == 200:
+            self.current_run = None
+
+        return result
