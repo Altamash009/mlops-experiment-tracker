@@ -1,3 +1,63 @@
-venv/
+# ==========================
+# Python
+# ==========================
+
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.pytest_cache/
+
+# Virtual Environment
+backend/venv/
+venv/
+env/
+
+# Environment Variables
+backend/.env
 .env
+
+# ==========================
+# Flask
+# ==========================
+
+instance/
+*.sqlite3
+
+# ==========================
+# Uploaded Files & Artifacts
+# ==========================
+
+backend/uploads/
+backend/artifacts_storage/
+
+# Keep folder structure
+!backend/uploads/.gitkeep
+!backend/artifacts_storage/.gitkeep
+
+# ==========================
+# React
+# ==========================
+
+frontend/node_modules/
+frontend/build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==========================
+# VS Code
+# ==========================
+
+.vscode/
+
+# ==========================
+# OS Files
+# ==========================
+
+.DS_Store
+Thumbs.db

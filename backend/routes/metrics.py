@@ -38,7 +38,6 @@ def create_metric():
             "id": metric.id
         })
     except ValueError as e:
-
         return jsonify({
             "error": str(e)
         }), 400
