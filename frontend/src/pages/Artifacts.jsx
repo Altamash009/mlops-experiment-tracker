@@ -1,10 +1,16 @@
-function Artifacts() {
+import Layout from "../components/Layout";
 
-    return (
+function Artifacts(){
 
-        <h1>Artifacts</h1>
+return(
 
-    );
+<Layout>
+
+<h2>Artifacts</h2>
+
+</Layout>
+
+);
 
 }
 
