@@ -91,3 +91,42 @@ def dashboard_summary():
         )
 
     })
+
+
+# Route to get the recent runs
+@dashboard_bp.route(
+    "/recent-runs",
+    methods=["GET"]
+)
+def recent_runs():
+
+    db = SessionLocal()
+
+    runs = (
+        db.query(Run)
+        .order_by(Run.id.desc())
+        .limit(10)
+        .all()
+    )
+
+    response = []
+
+    for run in runs:
+
+        response.append({
+
+            "run_id": run.id,
+
+            "experiment_name": run.experiment_name,
+
+            "status": run.status,
+
+            "start_time": run.start_time,
+
+            "end_time": run.end_time
+
+        })
+
+    db.close()
+
+    return jsonify(response)

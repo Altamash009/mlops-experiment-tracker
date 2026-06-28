@@ -1,8 +1,9 @@
 import Layout from "../components/Layout";
 import DashboardCard from "../components/DashboardCard";
+import RunsTable from "../components/RunsTable";
 import { useEffect, useState } from "react";
 
-import { getDashboardSummary } from "../services/api";
+import { getDashboardSummary, getRecentRuns } from "../services/api";
 
 import {
 
@@ -24,6 +25,8 @@ const [loading, setLoading] = useState(true);
 
 const [error, setError] = useState("");
 
+const [runs,setRuns]=useState([]);
+
 useEffect(() => {
 
     async function loadDashboard() {
@@ -33,6 +36,10 @@ useEffect(() => {
             const data = await getDashboardSummary();
 
             setSummary(data);
+
+            const recentRuns = await getRecentRuns();
+
+            setRuns(recentRuns);
 
         }
 
@@ -161,6 +168,8 @@ color="text-red-500"
 />
 
 </div>
+
+<RunsTable runs={runs} />
 
 </Layout>
 
