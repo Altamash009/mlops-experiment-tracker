@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 
 import { getDashboardSummary, getRecentRuns, getDashboardAnalytics } from "../services/api";
 import AccuracyChart from "../components/Analytics/AccuracyChart";
+import StatusChart from "../components/Analytics/StatusChart";
+import TopModels from "../components/Analytics/TopModels";
 
 import {
 
@@ -181,11 +183,21 @@ color="text-red-500"
 {
 analytics && (
 
-<AccuracyChart
+<div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-data={analytics.metric_trends.accuracy}
+    <AccuracyChart
+        data={analytics.metric_trends.accuracy}
+    />
 
-/>
+    <StatusChart
+        data={analytics.status_distribution}
+    />
+
+    <TopModels
+        models={analytics.top_models}
+    />
+
+</div>
 
 )
 }
