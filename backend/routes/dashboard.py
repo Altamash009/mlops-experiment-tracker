@@ -5,6 +5,9 @@ from models.database import SessionLocal
 from models.run import Run
 from models.artifact import Artifact
 from models.model_registry import ModelRegistry
+from sqlalchemy import func
+
+from models.metric import Metric
 
 dashboard_bp = Blueprint(
     "dashboard",
@@ -130,3 +133,122 @@ def recent_runs():
     db.close()
 
     return jsonify(response)
+
+
+# Route to get the analytics data
+@dashboard_bp.route(
+    "/analytics",
+    methods=["GET"]
+)
+def dashboard_analytics():
+
+    db = SessionLocal()
+
+    accuracy_metrics = (
+
+        db.query(Metric)
+
+        .filter(
+            Metric.metric_name == "accuracy"
+        )
+
+        .order_by(
+            Metric.run_id
+        )
+
+        .all()
+
+    )
+
+    accuracy_trend = []
+
+    for metric in accuracy_metrics:
+
+        accuracy_trend.append({
+
+            "run_id": metric.run_id,
+
+            "value": metric.metric_value
+
+        })
+
+    status_counts = (
+
+        db.query(
+
+            Run.status,
+
+            func.count(Run.id)
+
+        )
+
+        .group_by(
+            Run.status
+        )
+
+        .all()
+
+    )
+
+    status_distribution = {}
+
+    for status, count in status_counts:
+
+        status_distribution[status] = count
+
+    top_models = (
+
+        db.query(
+            ModelRegistry.model_name,
+            ModelRegistry.version,
+            Metric.metric_value
+        )
+
+        .join(
+            Metric,
+            Metric.run_id == ModelRegistry.run_id
+        )
+
+        .filter(
+            Metric.metric_name == "accuracy"
+        )
+
+        .order_by(
+            Metric.metric_value.desc()
+        )
+
+        .limit(5)
+
+        .all()
+
+    )
+
+    leaderboard = []
+
+    for model in top_models:
+
+        leaderboard.append({
+
+            "model_name": model.model_name,
+
+            "version": model.version,
+
+            "accuracy": model.metric_value
+
+        })
+
+    db.close()
+
+    return jsonify({
+
+        "metric_trends": {
+
+            "accuracy": accuracy_trend
+
+        },
+
+        "status_distribution": status_distribution,
+
+        "top_models": leaderboard
+
+    })

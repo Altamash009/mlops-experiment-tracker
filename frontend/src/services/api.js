@@ -7,6 +7,7 @@ const api = axios.create({
 
 export default api;
 
+// Dashboard Endpoints
 export const getDashboardSummary = async () => {
 
     const response = await api.get("/dashboard/summary");
@@ -18,6 +19,14 @@ export const getDashboardSummary = async () => {
 export const getRecentRuns = async () => {
 
     const response = await api.get("/dashboard/recent-runs");
+
+    return response.data;
+
+};
+
+export const getDashboardAnalytics = async () => {
+
+    const response = await api.get("/dashboard/analytics");
 
     return response.data;
 

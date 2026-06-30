@@ -3,7 +3,8 @@ import DashboardCard from "../components/DashboardCard";
 import RunsTable from "../components/RunsTable";
 import { useEffect, useState } from "react";
 
-import { getDashboardSummary, getRecentRuns } from "../services/api";
+import { getDashboardSummary, getRecentRuns, getDashboardAnalytics } from "../services/api";
+import AccuracyChart from "../components/Analytics/AccuracyChart";
 
 import {
 
@@ -27,6 +28,8 @@ const [error, setError] = useState("");
 
 const [runs,setRuns]=useState([]);
 
+const [analytics, setAnalytics] = useState(null);
+
 useEffect(() => {
 
     async function loadDashboard() {
@@ -40,6 +43,10 @@ useEffect(() => {
             const recentRuns = await getRecentRuns();
 
             setRuns(recentRuns);
+
+            const analyticsData = await getDashboardAnalytics();
+
+            setAnalytics(analyticsData);
 
         }
 
@@ -170,6 +177,18 @@ color="text-red-500"
 </div>
 
 <RunsTable runs={runs} />
+
+{
+analytics && (
+
+<AccuracyChart
+
+data={analytics.metric_trends.accuracy}
+
+/>
+
+)
+}
 
 </Layout>
 
