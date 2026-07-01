@@ -1,47 +1,64 @@
+import Card from "./UI/Card";
+
 function DashboardCard({
+
     title,
     value,
     icon,
     color
+
 }) {
 
     return (
 
-        <div
+        <Card
             className="
-            bg-white
-            rounded-card
-            shadow-card
-            hover:shadow-hover
-            transition-all
-            duration-300
-            p-6
-            flex
-            justify-between
-            items-center
+                relative
+                overflow-hidden
+                group
+                cursor-pointer
             "
         >
 
-            <div>
+            {/* Decorative Background */}
 
-                <p className="text-gray-500 text-sm">
+            <div
+                className="
+                    absolute
+                    -right-10
+                    -top-10
+                    w-36
+                    h-36
+                    rounded-full
+                    bg-slate-100
+                    opacity-50
+                    group-hover:scale-110
+                    transition-all
+                    duration-500
+                "
+            />
 
-                    {title}
-
-                </p>
-
-                <h2 className="text-4xl font-bold mt-2">
-
-                    {value}
-
-                </h2>
-
-            </div>
+            {/* Icon */}
 
             <div
                 className={`
-                    text-5xl
+                    w-16
+                    h-16
+                    rounded-2xl
+                    flex
+                    items-center
+                    justify-center
+                    text-3xl
+                    shadow-lg
+                    mb-6
+
                     ${color}
+
+                    bg-slate-100
+
+                    group-hover:scale-110
+                    transition-all
+                    duration-300
                 `}
             >
 
@@ -49,7 +66,74 @@ function DashboardCard({
 
             </div>
 
-        </div>
+            {/* Title */}
+
+            <p
+                className="
+                    text-slate-500
+                    text-sm
+                    font-semibold
+                    uppercase
+                    tracking-wider
+                "
+            >
+
+                {title}
+
+            </p>
+
+            {/* Number */}
+
+            <h2
+                className="
+                    text-5xl
+                    font-bold
+                    text-slate-800
+                    mt-3
+                "
+            >
+
+                {value}
+
+            </h2>
+
+            {/* Footer */}
+
+            <div
+                className="
+                    mt-6
+                    flex
+                    justify-between
+                    items-center
+                "
+            >
+
+                <span
+                    className="
+                        text-green-600
+                        text-sm
+                        font-semibold
+                    "
+                >
+
+                    ↑ Active
+
+                </span>
+
+                <span
+                    className="
+                        text-slate-400
+                        text-xs
+                    "
+                >
+
+                    Updated now
+
+                </span>
+
+            </div>
+
+        </Card>
 
     );
 

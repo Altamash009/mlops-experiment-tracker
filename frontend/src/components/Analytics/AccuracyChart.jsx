@@ -1,84 +1,167 @@
+import Card from "../UI/Card";
+import SectionHeader from "../UI/SectionHeader";
+
 import {
     Line
 } from "react-chartjs-2";
 
 import {
-
-Chart as ChartJS,
-
-CategoryScale,
-
-LinearScale,
-
-PointElement,
-
-LineElement,
-
-Tooltip,
-
-Legend
-
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Tooltip,
+    Legend,
+    Filler
 } from "chart.js";
 
 ChartJS.register(
-
-CategoryScale,
-
-LinearScale,
-
-PointElement,
-
-LineElement,
-
-Tooltip,
-
-Legend
-
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Tooltip,
+    Legend,
+    Filler
 );
 
-function AccuracyChart({
-
-    data
-
-}) {
+function AccuracyChart({ data }) {
 
     const chartData = {
-
         labels: data.map(item => `Run ${item.run_id}`),
 
         datasets: [
-
             {
-
                 label: "Accuracy",
 
                 data: data.map(item => item.value),
 
                 borderColor: "#2563EB",
 
-                backgroundColor: "#93C5FD",
+                backgroundColor: (context) => {
 
-                tension: 0.35
+                    const chart = context.chart;
+
+                    const { ctx, chartArea } = chart;
+
+                    if (!chartArea) return null;
+
+                    const gradient = ctx.createLinearGradient(
+                        0,
+                        chartArea.top,
+                        0,
+                        chartArea.bottom
+                    );
+
+                    gradient.addColorStop(0, "rgba(37,99,235,0.35)");
+                    gradient.addColorStop(1, "rgba(37,99,235,0)");
+
+                    return gradient;
+                },
+
+                fill: true,
+
+                borderWidth: 3,
+
+                tension: 0.45,
+
+                pointRadius: 5,
+
+                pointHoverRadius: 7,
+
+                pointBackgroundColor: "#2563EB",
+
+                pointBorderColor: "#ffffff",
+
+                pointBorderWidth: 2
+            }
+        ]
+    };
+
+    const options = {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        plugins: {
+
+            legend: {
+                display: false
+            },
+
+            tooltip: {
+
+                backgroundColor: "#1E293B",
+
+                padding: 12,
+
+                cornerRadius: 10,
+
+                titleFont: {
+                    size: 14
+                },
+
+                bodyFont: {
+                    size: 13
+                }
 
             }
 
-        ]
+        },
+
+        scales: {
+
+            x: {
+
+                grid: {
+                    display: false
+                },
+
+                ticks: {
+                    color: "#64748B"
+                }
+
+            },
+
+            y: {
+
+                beginAtZero: false,
+
+                grid: {
+                    color: "#E2E8F0"
+                },
+
+                ticks: {
+                    color: "#64748B"
+                }
+
+            }
+
+        }
 
     };
 
     return (
 
-        <div className="bg-white rounded-card shadow-card p-6">
+        <Card>
 
-            <h2 className="text-xl font-bold mb-6">
+            <SectionHeader
+                title="Accuracy Trend"
+                subtitle="Model accuracy across experiment runs"
+            />
 
-                Accuracy Trend
+            <div className="h-80">
 
-            </h2>
+                <Line
+                    data={chartData}
+                    options={options}
+                />
 
-            <Line data={chartData} />
+            </div>
 
-        </div>
+        </Card>
 
     );
 

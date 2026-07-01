@@ -1,6 +1,7 @@
-import {
-    Doughnut
-} from "react-chartjs-2";
+import Card from "../UI/Card";
+import SectionHeader from "../UI/SectionHeader";
+
+import { Doughnut } from "react-chartjs-2";
 
 import {
     Chart as ChartJS,
@@ -17,33 +18,77 @@ ChartJS.register(
 
 function StatusChart({ data }) {
 
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+
+    const totalRuns = values.reduce((a, b) => a + b, 0);
+
     const chartData = {
 
-        labels: Object.keys(data),
+        labels,
 
         datasets: [
+
             {
-                data: Object.values(data),
+
+                data: values,
 
                 backgroundColor: [
+
                     "#22C55E",
                     "#F59E0B",
                     "#EF4444",
-                    "#6B7280"
+                    "#64748B"
+
                 ],
 
-                borderWidth: 2
+                borderColor: "#ffffff",
+
+                borderWidth: 4,
+
+                hoverOffset: 12,
+
+                cutout: "72%"
+
             }
+
         ]
+
     };
 
     const options = {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
 
         plugins: {
 
             legend: {
 
-                position: "bottom"
+                display: false
+
+            },
+
+            tooltip: {
+
+                backgroundColor: "#1E293B",
+
+                cornerRadius: 10,
+
+                padding: 12,
+
+                titleFont: {
+
+                    size: 14
+
+                },
+
+                bodyFont: {
+
+                    size: 13
+
+                }
 
             }
 
@@ -51,22 +96,117 @@ function StatusChart({ data }) {
 
     };
 
+    const colors = [
+
+        "bg-green-500",
+
+        "bg-yellow-500",
+
+        "bg-red-500",
+
+        "bg-slate-500"
+
+    ];
+
     return (
 
-        <div className="bg-white rounded-card shadow-card p-6">
+        <Card>
 
-            <h2 className="text-xl font-bold mb-6">
+            <SectionHeader
 
-                Run Status Distribution
+                title="Run Status"
 
-            </h2>
+                subtitle="Distribution of experiment status"
 
-            <Doughnut
-                data={chartData}
-                options={options}
             />
 
-        </div>
+            <div className="relative h-80">
+
+                <Doughnut
+
+                    data={chartData}
+
+                    options={options}
+
+                />
+
+                {/* Center Text */}
+
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+
+                    <p className="text-4xl font-bold text-slate-800">
+
+                        {totalRuns}
+
+                    </p>
+
+                    <p className="text-sm text-slate-500">
+
+                        Total Runs
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            {/* Custom Legend */}
+
+            <div className="mt-8 space-y-3">
+
+                {
+
+                    labels.map((label, index) => (
+
+                        <div
+
+                            key={label}
+
+                            className="flex justify-between items-center"
+
+                        >
+
+                            <div className="flex items-center gap-3">
+
+                                <div
+
+                                    className={`
+
+                                        w-3
+
+                                        h-3
+
+                                        rounded-full
+
+                                        ${colors[index]}
+
+                                    `}
+
+                                />
+
+                                <span className="text-slate-700 font-medium">
+
+                                    {label}
+
+                                </span>
+
+                            </div>
+
+                            <span className="font-bold text-slate-800">
+
+                                {values[index]}
+
+                            </span>
+
+                        </div>
+
+                    ))
+
+                }
+
+            </div>
+
+        </Card>
 
     );
 
