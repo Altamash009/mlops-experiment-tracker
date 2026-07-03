@@ -1,25 +1,32 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
-from models.database import Base
 from sqlalchemy.orm import relationship
+
+from models.database import Base
+
 
 class Parameter(Base):
     __tablename__ = "parameters"
 
-    id = Column(Integer, primary_key=True)
+    parameter_id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
 
     run_id = Column(
         Integer,
-        ForeignKey("runs.id"),
-        nullable=False
+        ForeignKey("runs.run_id"),
+        nullable=False,
+        index=True
     )
 
     param_name = Column(
-        String,
+        String(100),
         nullable=False
     )
 
     param_value = Column(
-        String,
+        String(255),
         nullable=False
     )
 
@@ -27,3 +34,6 @@ class Parameter(Base):
         "Run",
         back_populates="parameters"
     )
+
+    def __repr__(self):
+        return f"<Parameter {self.param_name}>"

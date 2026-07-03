@@ -1,11 +1,8 @@
-from models.database import engine, Base
-
-from models.run import Run
-from models.parameter import Parameter
-from models.metric import Metric
-from models.artifact import Artifact
-from models.model_registry import ModelRegistry
+from models.database import Base, engine
+import models
 
 Base.metadata.create_all(bind=engine)
 
-print("All tables created successfully!")
+print("=" * 50)
+print("✅ All database tables created successfully!")
+print("=" * 50)

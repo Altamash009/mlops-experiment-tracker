@@ -1,25 +1,49 @@
-from sqlalchemy import Column, Integer, String, DateTime
-from models.database import Base
 from datetime import datetime
+
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    DateTime,
+    ForeignKey
+)
+
 from sqlalchemy.orm import relationship
-from models.parameter import Parameter
-from models.metric import Metric
-from models.artifact import Artifact
+
+from models.database import Base
 
 
 class Run(Base):
     __tablename__ = "runs"
 
-    id = Column(Integer, primary_key=True, index=True)
+    run_id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
 
-    experiment_name = Column(
-        String,
+    project_id = Column(
+        Integer,
+        ForeignKey("projects.project_id"),
+        nullable=False,
+        index=True
+    )
+
+    run_name = Column(
+        String(150),
         nullable=False
     )
 
     status = Column(
-        String,
-        default="RUNNING"
+        String(30),
+        default="RUNNING",
+        nullable=False
+    )
+
+    notes = Column(
+        Text,
+        nullable=True
     )
 
     start_time = Column(
@@ -32,9 +56,9 @@ class Run(Base):
         nullable=True
     )
 
-    created_at = Column(
-        DateTime,
-        default=datetime.utcnow
+    project = relationship(
+        "Project",
+        back_populates="runs"
     )
 
     parameters = relationship(
@@ -56,5 +80,10 @@ class Run(Base):
     )
 
     registered_models = relationship(
-        "ModelRegistry"
+        "RegisteredModel",
+        back_populates="run",
+        cascade="all, delete-orphan"
     )
+
+    def __repr__(self):
+        return f"<Run {self.run_name}>"

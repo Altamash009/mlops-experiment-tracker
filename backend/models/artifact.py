@@ -1,68 +1,50 @@
+from datetime import datetime
+
 from sqlalchemy import (
     Column,
     Integer,
     String,
-    ForeignKey,
-    DateTime
+    DateTime,
+    ForeignKey
 )
 
 from sqlalchemy.orm import relationship
-
-from datetime import datetime
 
 from models.database import Base
 
 
 class Artifact(Base):
-
     __tablename__ = "artifacts"
 
-    id = Column(
+    artifact_id = Column(
         Integer,
-        primary_key=True
+        primary_key=True,
+        index=True
     )
 
     run_id = Column(
         Integer,
-        ForeignKey("runs.id"),
-        nullable=False
+        ForeignKey("runs.run_id"),
+        nullable=False,
+        index=True
     )
 
     file_name = Column(
-        String,
+        String(255),
         nullable=False
     )
 
-    file_type = Column(
-        String
-    )
-
-    storage_type = Column(
-        String,
-        default="LOCAL"
-    )
-
-    storage_uri = Column(
-        String,
+    file_path = Column(
+        String(500),
         nullable=False
-    )
-
-    artifact_version = Column(
-        Integer,
-        default=1
-    )
-
-    file_size = Column(
-        Integer,
-        nullable=True
     )
 
     checksum = Column(
-        String,
-        nullable=True
+        String(128),
+        nullable=False
     )
 
-    created_at = Column(
+    uploaded_at = Column(
         DateTime,
         default=datetime.utcnow
     )
@@ -71,3 +53,6 @@ class Artifact(Base):
         "Run",
         back_populates="artifacts"
     )
+
+    def __repr__(self):
+        return f"<Artifact {self.file_name}>"

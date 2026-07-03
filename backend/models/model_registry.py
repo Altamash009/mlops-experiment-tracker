@@ -1,61 +1,71 @@
+from datetime import datetime
+
 from sqlalchemy import (
     Column,
     Integer,
     String,
-    ForeignKey,
+    Text,
     DateTime,
-    UniqueConstraint
+    ForeignKey
 )
 
 from sqlalchemy.orm import relationship
 
 from models.database import Base
 
-from datetime import datetime
 
+class RegisteredModel(Base):
+    __tablename__ = "registered_models"
 
-class ModelRegistry(Base):
-
-    __tablename__ = "model_registry"
-
-    __table_args__ = (
-        UniqueConstraint(
-            "model_name",
-            "version",
-            name="unique_model_version"
-        ),
-    )
-
-    id = Column(
+    model_id = Column(
         Integer,
-        primary_key=True
-    )
-
-    model_name = Column(
-        String,
-        nullable=False
-    )
-
-    version = Column(
-        String,
-        nullable=False
+        primary_key=True,
+        index=True
     )
 
     run_id = Column(
         Integer,
-        ForeignKey("runs.id")
+        ForeignKey("runs.run_id"),
+        nullable=False,
+        index=True
+    )
+
+    model_name = Column(
+        String(150),
+        nullable=False
+    )
+
+    version = Column(
+        Integer,
+        nullable=False,
+        default=1
     )
 
     stage = Column(
-        String,
+        String(30),
+        nullable=False,
         default="Development"
     )
 
-    created_at = Column(
+    description = Column(
+        Text,
+        nullable=True
+    )
+
+    registered_at = Column(
         DateTime,
         default=datetime.utcnow
     )
 
     run = relationship(
-        "Run"
+        "Run",
+        back_populates="registered_models"
     )
+
+    def __repr__(self):
+        return (
+            f"<RegisteredModel("
+            f"{self.model_name}, "
+            f"v{self.version}, "
+            f"{self.stage})>"
+        )
