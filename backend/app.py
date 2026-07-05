@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 
 from routes.auth import auth_bp
-from utils.auth import jwt_required
+from routes.projects import projects_bp
 
 app = Flask(__name__)
 
@@ -22,15 +22,10 @@ app.register_blueprint(
     url_prefix="/auth"
 )
 
-@app.route("/me")
-@jwt_required
-def me(current_user):
-
-    return {
-        "id": current_user.user_id,
-        "name": current_user.name,
-        "email": current_user.email
-    }
+app.register_blueprint(
+    projects_bp,
+    url_prefix="/projects"
+)
 
 @app.route("/")
 def home():
