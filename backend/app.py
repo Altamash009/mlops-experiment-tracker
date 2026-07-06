@@ -3,6 +3,7 @@ from flask_cors import CORS
 
 from routes.auth import auth_bp
 from routes.projects import projects_bp
+from routes.runs import runs_bp
 
 app = Flask(__name__)
 
@@ -25,6 +26,11 @@ app.register_blueprint(
 app.register_blueprint(
     projects_bp,
     url_prefix="/projects"
+)
+
+app.register_blueprint(
+    runs_bp,
+    url_prefix="/runs"
 )
 
 @app.route("/")
