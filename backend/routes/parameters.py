@@ -1,11 +1,12 @@
-from flask import Blueprint
-from flask import request
-from flask import jsonify
+from flask import Blueprint, request
 
 from models.database import SessionLocal
 
+from utils.auth import jwt_required
+
 from services.parameter_service import (
-    log_parameter
+    log_parameter,
+    get_run_parameters
 )
 
 parameters_bp = Blueprint(
@@ -18,30 +19,47 @@ parameters_bp = Blueprint(
     "/log",
     methods=["POST"]
 )
-def create_parameter():
-
-    data = request.get_json()
+@jwt_required
+def log_parameter_route(current_user):
 
     db = SessionLocal()
 
     try:
 
-        parameter = log_parameter(
+        data = request.get_json()
+
+        response, status = log_parameter(
             db,
-            data["run_id"],
-            data["param_name"],
-            data["param_value"]
+            current_user,
+            data
         )
 
-        return jsonify({
-            "message": "Parameter logged",
-            "id": parameter.id
-        })
-    except ValueError as e:
-
-        return jsonify({
-            "error": str(e)
-        }), 400
+        return response, status
 
     finally:
+
+        db.close()
+
+
+@parameters_bp.route(
+    "/run/<int:run_id>",
+    methods=["GET"]
+)
+@jwt_required
+def get_run_parameters_route(current_user, run_id):
+
+    db = SessionLocal()
+
+    try:
+
+        response, status = get_run_parameters(
+            db,
+            current_user,
+            run_id
+        )
+
+        return response, status
+
+    finally:
+
         db.close()
