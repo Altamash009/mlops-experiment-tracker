@@ -1,11 +1,12 @@
-from flask import Blueprint
-from flask import request
-from flask import jsonify
+from flask import Blueprint, request
 
 from models.database import SessionLocal
 
+from utils.auth import jwt_required
+
 from services.metric_service import (
-    log_metric
+    log_metric,
+    get_run_metrics
 )
 
 metrics_bp = Blueprint(
@@ -18,29 +19,47 @@ metrics_bp = Blueprint(
     "/log",
     methods=["POST"]
 )
-def create_metric():
-
-    data = request.get_json()
+@jwt_required
+def log_metric_route(current_user):
 
     db = SessionLocal()
 
     try:
 
-        metric = log_metric(
+        data = request.get_json()
+
+        response, status = log_metric(
             db,
-            data["run_id"],
-            data["metric_name"],
-            data["metric_value"]
+            current_user,
+            data
         )
 
-        return jsonify({
-            "message": "Metric logged",
-            "id": metric.id
-        })
-    except ValueError as e:
-        return jsonify({
-            "error": str(e)
-        }), 400
+        return response, status
 
     finally:
+
+        db.close()
+
+
+@metrics_bp.route(
+    "/run/<int:run_id>",
+    methods=["GET"]
+)
+@jwt_required
+def get_run_metrics_route(current_user, run_id):
+
+    db = SessionLocal()
+
+    try:
+
+        response, status = get_run_metrics(
+            db,
+            current_user,
+            run_id
+        )
+
+        return response, status
+
+    finally:
+
         db.close()

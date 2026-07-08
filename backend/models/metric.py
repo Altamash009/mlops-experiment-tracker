@@ -42,12 +42,14 @@ class Metric(Base):
 
     step = Column(
         Integer,
+        nullable=False,
         default=0
     )
 
-    timestamp = Column(
+    logged_at = Column(
         DateTime,
-        default=datetime.utcnow
+        default=datetime.utcnow,
+        nullable=False
     )
 
     run = relationship(
