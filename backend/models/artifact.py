@@ -4,6 +4,7 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
+    BigInteger,
     DateTime,
     ForeignKey
 )
@@ -14,6 +15,7 @@ from models.database import Base
 
 
 class Artifact(Base):
+
     __tablename__ = "artifacts"
 
     artifact_id = Column(
@@ -29,13 +31,29 @@ class Artifact(Base):
         index=True
     )
 
-    file_name = Column(
+    artifact_name = Column(
         String(255),
         nullable=False
     )
 
-    file_path = Column(
+    artifact_type = Column(
+        String(50),
+        nullable=False,
+        default="other"
+    )
+
+    description = Column(
         String(500),
+        nullable=True
+    )
+
+    storage_path = Column(
+        String(500),
+        nullable=False
+    )
+
+    file_size = Column(
+        BigInteger,
         nullable=False
     )
 
@@ -46,7 +64,8 @@ class Artifact(Base):
 
     uploaded_at = Column(
         DateTime,
-        default=datetime.utcnow
+        default=datetime.utcnow,
+        nullable=False
     )
 
     run = relationship(
@@ -55,4 +74,5 @@ class Artifact(Base):
     )
 
     def __repr__(self):
-        return f"<Artifact {self.file_name}>"
+
+        return f"<Artifact {self.artifact_name}>"

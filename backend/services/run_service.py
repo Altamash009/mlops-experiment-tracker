@@ -2,6 +2,8 @@ from datetime import datetime
 
 from models.run import Run
 from models.project import Project
+from models.parameter import Parameter
+from models.metric import Metric
 
 def generate_run_name():
 
@@ -201,6 +203,53 @@ def get_run_details(db, current_user, run_id):
             "error": "Run not found."
         }, 404
 
+    parameters = (
+        db.query(Parameter)
+        .filter(
+            Parameter.run_id == run.run_id
+        )
+        .order_by(Parameter.parameter_id)
+        .all()
+    )
+
+    metrics = (
+        db.query(Metric)
+        .filter(
+            Metric.run_id == run.run_id
+        )
+        .order_by(
+            Metric.metric_name,
+            Metric.step
+        )
+        .all()
+    )
+
+    parameter_map = {}
+
+    for parameter in parameters:
+
+        parameter_map[parameter.param_name] = parameter.param_value
+
+    grouped_metrics = {}
+
+    for metric in metrics:
+
+        if metric.metric_name not in grouped_metrics:
+
+            grouped_metrics[metric.metric_name] = []
+
+        grouped_metrics[metric.metric_name].append({
+
+            "metric_id": metric.metric_id,
+
+            "step": metric.step,
+
+            "value": metric.metric_value,
+
+            "logged_at": metric.logged_at
+
+        })
+
     return {
 
         "run": {
@@ -219,9 +268,9 @@ def get_run_details(db, current_user, run_id):
 
             "end_time": run.end_time,
 
-            "parameters": [],
+            "parameters": parameter_map,
 
-            "metrics": [],
+            "metrics": grouped_metrics,
 
             "artifacts": [],
 
