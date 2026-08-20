@@ -1,20 +1,11 @@
-from flask import send_file
-import os
-from models.artifact import Artifact
-from flask import (
-    Blueprint,
-    request,
-    jsonify
-)
+from flask import Blueprint, request
 
 from models.database import SessionLocal
 
-from services.artifact_service import (
-    log_artifact,
-    upload_artifact,
-    get_artifact_by_id,
-    get_latest_artifact
-)
+from utils.auth import jwt_required
+
+from services.artifact_service import upload_artifact
+
 
 artifacts_bp = Blueprint(
     "artifacts",
@@ -23,173 +14,53 @@ artifacts_bp = Blueprint(
 
 
 @artifacts_bp.route(
-    "/log",
-    methods=["POST"]
-)
-def create_artifact():
-
-    data = request.get_json()
-
-    db = SessionLocal()
-
-    try:
-
-        artifact = log_artifact(
-            db,
-            data["run_id"],
-            data["file_name"],
-            data["file_type"],
-            data["storage_uri"]
-        )
-
-        return jsonify({
-            "message": "Artifact logged",
-            "artifact_id": artifact.id
-        })
-
-    except ValueError as e:
-
-        return jsonify({
-            "error": str(e)
-        }), 400
-
-    finally:
-        db.close()
-
-
-@artifacts_bp.route(
     "/upload",
     methods=["POST"]
 )
-def upload():
-
-    run_id = request.form.get(
-        "run_id"
-    )
-
-    uploaded_file = request.files.get(
-        "file"
-    )
-
-    if not run_id:
-
-        return jsonify({
-            "error":"run_id required"
-        }), 400
-
-    if not uploaded_file:
-
-        return jsonify({
-            "error":"file required"
-        }), 400
-    
-    db = SessionLocal()
-
-    try:
-        artifact = upload_artifact(
-            db,
-            int(run_id),
-            uploaded_file
-        )
-
-        return jsonify({
-
-            "artifact_id":
-                artifact.id,
-
-            "file_name":
-                artifact.file_name,
-
-            "storage_uri":
-                artifact.storage_uri
-        })
-    except ValueError as e:
-        return jsonify({
-            "error": str(e)
-        }), 400
-    finally:
-        db.close()
-
-# Route to download an artifact file
-@artifacts_bp.route(
-    "/download/<int:artifact_id>",
-    methods=["GET"]
-)
-def download_artifact(artifact_id):
+@jwt_required
+def upload_artifact_route(current_user):
 
     db = SessionLocal()
 
     try:
 
-        artifact = get_artifact_by_id(
-            db,
-            artifact_id
+        run_id = request.form.get("run_id")
+        artifact_type = request.form.get(
+            "artifact_type",
+            "other"
+        )
+        description = request.form.get(
+            "description"
         )
 
-        if not artifact:
+        file = request.files.get("file")
 
-            return jsonify({
-                "error": "Artifact not found"
-            }), 404
+        if not run_id:
 
-        if not os.path.exists(
-            artifact.storage_uri
-        ):
+            return {
+                "error": "run_id is required."
+            }, 400
 
-            return jsonify({
-                "error": "Artifact file missing from storage"
-            }), 404
+        try:
 
-        return send_file(
-            artifact.storage_uri,
-            as_attachment=True,
-            download_name=artifact.file_name
+            run_id = int(run_id)
+
+        except (TypeError, ValueError):
+
+            return {
+                "error": "run_id must be an integer."
+            }, 400
+
+        response, status = upload_artifact(
+            db=db,
+            current_user=current_user,
+            run_id=run_id,
+            file=file,
+            artifact_type=artifact_type,
+            description=description
         )
 
-    finally:
-
-        db.close()
-
-
-# Route to download the latest version of an artifact file
-@artifacts_bp.route(
-    "/latest/<int:run_id>/<path:file_name>",
-    methods=["GET"]
-)
-def download_latest_artifact(
-    run_id,
-    file_name
-):
-
-    db = SessionLocal()
-
-    try:
-
-        artifact = get_latest_artifact(
-            db,
-            run_id,
-            file_name
-        )
-
-        if not artifact:
-
-            return jsonify({
-                "error": "Artifact not found"
-            }), 404
-
-        if not os.path.exists(
-            artifact.storage_uri
-        ):
-
-            return jsonify({
-                "error": "Artifact missing from storage"
-            }), 404
-
-        return send_file(
-            artifact.storage_uri,
-            as_attachment=True,
-            download_name=artifact.file_name
-        )
+        return response, status
 
     finally:
 

@@ -1,176 +1,228 @@
-from models.artifact import Artifact
-from models.run import Run
-import os
-from werkzeug.utils import secure_filename
 import hashlib
 
-# Function to log an artifact
-def log_artifact(
-    db,
-    run_id,
-    file_name,
-    file_type,
-    storage_uri
-):
+from models.artifact import Artifact
+from models.run import Run
+from models.project import Project
 
-    run = (
-        db.query(Run)
-        .filter(Run.id == run_id)
-        .first()
-    )
+from artifact_storage.cloudinary_storage import CloudinaryStorage
 
-    if not run:
-        raise ValueError(
-            "Run not found"
-        )
 
-    if run.status == "COMPLETED":
-        raise ValueError(
-            "Run already completed"
-        )
+storage = CloudinaryStorage()
 
-    artifact = Artifact(
-        run_id=run_id,
-        file_name=file_name,
-        file_type=file_type,
-        storage_type="LOCAL",
-        storage_uri=storage_uri
-    )
 
-    db.add(artifact)
-
-    db.commit()
-
-    db.refresh(artifact)
-
-    return artifact
-
-# Function to calculate the checksum of a file
-def calculate_checksum(file_path):
+def calculate_sha256(file):
 
     sha256 = hashlib.sha256()
 
-    with open(file_path, "rb") as file:
+    while True:
 
-        while True:
+        chunk = file.read(1024 * 1024)
 
-            chunk = file.read(4096)
+        if not chunk:
+            break
 
-            if not chunk:
-                break
+        sha256.update(chunk)
 
-            sha256.update(chunk)
+    file.seek(0)
 
     return sha256.hexdigest()
 
-# Function to upload an artifact file
-def upload_artifact(
-    db,
-    run_id,
-    uploaded_file
-):
-    filename = secure_filename(
-        uploaded_file.filename
+
+def upload_artifact(db, current_user, run_id, file, artifact_type, description):
+
+    # --------------------------------------------------
+    # 1. Validate run ownership
+    # --------------------------------------------------
+
+    run = (
+        db.query(Run)
+        .join(Project)
+        .filter(
+            Run.run_id == run_id,
+            Project.user_id == current_user.user_id
+        )
+        .first()
     )
 
-    version = get_next_artifact_version(
-        db,
-        run_id,
-        filename
+    if run is None:
+
+        return {
+            "error": "Run not found."
+        }, 404
+
+    # --------------------------------------------------
+    # 2. Only RUNNING runs can receive artifacts
+    # --------------------------------------------------
+
+    if run.status != "RUNNING":
+
+        return {
+            "error": "Cannot upload artifacts. Run has already ended."
+        }, 400
+
+    # --------------------------------------------------
+    # 3. Validate file
+    # --------------------------------------------------
+
+    if file is None or not file.filename:
+
+        return {
+            "error": "Artifact file is required."
+        }, 400
+
+    artifact_name = file.filename
+
+    # --------------------------------------------------
+    # 4. Calculate file size
+    # --------------------------------------------------
+
+    file.seek(0, 2)
+
+    file_size = file.tell()
+
+    file.seek(0)
+
+    # --------------------------------------------------
+    # 5. Calculate SHA-256
+    # --------------------------------------------------
+
+    checksum = calculate_sha256(file)
+
+    # --------------------------------------------------
+    # 6. Validate artifact type
+    # --------------------------------------------------
+
+    allowed_types = {
+        "model",
+        "dataset",
+        "plot",
+        "image",
+        "report",
+        "log",
+        "config",
+        "other"
+    }
+
+    if artifact_type not in allowed_types:
+
+        return {
+            "error": (
+                "Invalid artifact_type. Allowed values: "
+                + ", ".join(sorted(allowed_types))
+            )
+        }, 400
+
+    # --------------------------------------------------
+    # 7. Generate Cloudinary object path
+    # --------------------------------------------------
+
+    public_id = (
+        f"artifact_{run.run_id}_{checksum[:12]}"
     )
 
-    storage_filename = (
-        f"v{version}_{filename}"
+    folder = (
+        f"mlops-tracker/"
+        f"user-{current_user.user_id}/"
+        f"project-{run.project_id}/"
+        f"run-{run.run_id}"
     )
 
-    storage_path = os.path.join(
-        "artifacts_storage",
-        storage_filename
-    )
+    # --------------------------------------------------
+    # 8. Upload to Cloudinary
+    # --------------------------------------------------
 
-    uploaded_file.save(
-        storage_path
-    )
+    try:
 
-    file_size = os.path.getsize(
-        storage_path
-    )
+        storage_result = storage.save(
+            file=file,
+            public_id=public_id,
+            folder=folder
+        )
 
-    checksum = calculate_checksum(storage_path)
+    except Exception as exc:
+
+        return {
+            "error": "Artifact upload failed.",
+            "details": str(exc)
+        }, 500
+
+    # --------------------------------------------------
+    # 9. Save artifact metadata in PostgreSQL
+    # --------------------------------------------------
 
     artifact = Artifact(
-        run_id=run_id,
-        file_name=filename,
-        file_type=filename.split(".")[-1],
-        storage_type="LOCAL",
-        storage_uri=storage_path,
-        artifact_version=version,
+
+        run_id=run.run_id,
+
+        artifact_name=artifact_name,
+
+        artifact_type=artifact_type,
+
+        description=description,
+
+        storage_path=storage_result["public_id"],
+
         file_size=file_size,
+
         checksum=checksum
+
     )
 
-    db.add(artifact)
+    try:
 
-    db.commit()
+        db.add(artifact)
 
-    db.refresh(artifact)
+        db.commit()
 
-    return artifact
+        db.refresh(artifact)
 
-# Function to retrieve an artifact by its ID
-def get_artifact_by_id(
-    db,
-    artifact_id
-):
+    except Exception:
 
-    return (
-        db.query(Artifact)
-        .filter(
-            Artifact.id == artifact_id
-        )
-        .first()
-    )
+        db.rollback()
 
-# Function to get the next artifact version for a given run and file name
-def get_next_artifact_version(
-    db,
-    run_id,
-    file_name
-):
+        # Try to remove the uploaded Cloudinary object
+        try:
 
-    latest = (
-        db.query(Artifact)
-        .filter(
-            Artifact.run_id == run_id,
-            Artifact.file_name == file_name
-        )
-        .order_by(
-            Artifact.artifact_version.desc()
-        )
-        .first()
-    )
+            storage.delete(
+                public_id=storage_result["public_id"]
+            )
 
-    if latest:
+        except Exception:
 
-        return latest.artifact_version + 1
+            pass
 
-    return 1
+        return {
+            "error": "Failed to save artifact metadata."
+        }, 500
 
-# Function to get the latest artifact for a given run and file name
-def get_latest_artifact(
-    db,
-    run_id,
-    file_name
-):
+    # --------------------------------------------------
+    # 10. Return response
+    # --------------------------------------------------
 
-    return (
-        db.query(Artifact)
-        .filter(
-            Artifact.run_id == run_id,
-            Artifact.file_name == file_name
-        )
-        .order_by(
-            Artifact.artifact_version.desc()
-        )
-        .first()
-    )
+    return {
+
+        "message": "Artifact uploaded successfully.",
+
+        "artifact": {
+
+            "artifact_id": artifact.artifact_id,
+
+            "run_id": artifact.run_id,
+
+            "artifact_name": artifact.artifact_name,
+
+            "artifact_type": artifact.artifact_type,
+
+            "description": artifact.description,
+
+            "storage_path": artifact.storage_path,
+
+            "file_size": artifact.file_size,
+
+            "checksum": artifact.checksum,
+
+            "uploaded_at": artifact.uploaded_at
+
+        }
+
+    }, 201
