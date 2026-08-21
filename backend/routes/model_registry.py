@@ -1,320 +1,223 @@
-from flask import (
-    Blueprint,
-    request,
-    jsonify
-)
+from flask import Blueprint, request
 
 from models.database import SessionLocal
 
+from utils.auth import jwt_required
+
 from services.model_registry_service import (
     register_model,
+    get_project_models,
     promote_model,
-    get_production_model,
-    get_model_history,
     rollback_model,
-    get_leaderboard
+    get_registered_model,
+    get_model_history,
+    get_model_leaderboard
 )
+
 
 registry_bp = Blueprint(
     "registry",
     __name__
 )
 
-# Route to register a model in the model registry
+
 @registry_bp.route(
     "/register",
     methods=["POST"]
 )
-def create_registry_entry():
-
-    data = request.get_json()
+@jwt_required
+def register_model_route(current_user):
 
     db = SessionLocal()
 
     try:
 
-        registry = register_model(
+        data = request.get_json() or {}
 
+        response, status = register_model(
             db,
-
-            data["model_name"],
-
-            data["version"],
-
-            data["run_id"]
+            current_user,
+            data
         )
 
-        return jsonify({
-
-            "id":
-                registry.id,
-
-            "model_name":
-                registry.model_name,
-
-            "version":
-                registry.version,
-
-            "stage":
-                registry.stage
-        })
-
-    except ValueError as e:
-
-        return jsonify({
-            "error": str(e)
-        }), 400
+        return response, status
 
     finally:
 
         db.close()
 
-# Route to promote a model to the next stage in the model registry
+
+
 @registry_bp.route(
-    "/promote/<int:model_id>",
-    methods=["POST"]
+    "/project/<int:project_id>",
+    methods=["GET"]
 )
-def promote_registry_model(
-    model_id
-):
+@jwt_required
+def get_project_models_route(current_user, project_id):
 
     db = SessionLocal()
 
     try:
 
-        model = promote_model(
+        response, status = get_project_models(
             db,
+            current_user,
+            project_id
+        )
+
+        return response, status
+
+    finally:
+
+        db.close()
+
+
+
+@registry_bp.route(
+    "/<int:model_id>/promote",
+    methods=["POST"]
+)
+@jwt_required
+def promote_model_route(current_user, model_id):
+
+    db = SessionLocal()
+
+    try:
+
+        response, status = promote_model(
+            db,
+            current_user,
             model_id
         )
 
-        return jsonify({
-
-            "model_id":
-                model.id,
-
-            "model_name":
-                model.model_name,
-
-            "version":
-                model.version,
-
-            "stage":
-                model.stage
-        })
-
-    except ValueError as e:
-
-        return jsonify({
-            "error": str(e)
-        }), 400
-
-    finally:
-
-        db.close()
-
-# Route to get the production model from the model registry
-@registry_bp.route(
-    "/production/<string:model_name>",
-    methods=["GET"]
-)
-def production_model(
-    model_name
-):
-
-    db = SessionLocal()
-
-    try:
-
-        model = get_production_model(
-            db,
-            model_name
-        )
-
-        return jsonify({
-
-            "id":
-                model.id,
-
-            "model_name":
-                model.model_name,
-
-            "version":
-                model.version,
-
-            "stage":
-                model.stage,
-
-            "run_id":
-                model.run_id
-        })
-
-    except ValueError as e:
-
-        return jsonify({
-            "error": str(e)
-        }), 404
+        return response, status
 
     finally:
         db.close()
 
 
-# Route to get the model history from the model registry
 @registry_bp.route(
-    "/history/<string:model_name>",
-    methods=["GET"]
-)
-def model_history(
-    model_name
-):
-
-    db = SessionLocal()
-
-    try:
-
-        models = get_model_history(
-            db,
-            model_name
-        )
-
-        result = []
-
-        for model in models:
-
-            metrics = {}
-
-            if model.run:
-
-                for metric in model.run.metrics:
-
-                    metrics[
-                        metric.metric_name
-                    ] = metric.metric_value
-
-            result.append({
-
-                "id":
-                    model.id,
-
-                "model_name":
-                    model.model_name,
-
-                "version":
-                    model.version,
-
-                "stage":
-                    model.stage,
-
-                "run_id":
-                    model.run_id,
-
-                "metrics":
-                    metrics,
-
-                "created_at":
-                    model.created_at
-            })
-
-        return jsonify(result)
-
-    except ValueError as e:
-
-        return jsonify({
-            "error": str(e)
-        }), 404
-
-    finally:
-
-        db.close()
-
-
-# Route to rollback a model to the previous stage in the model registry
-@registry_bp.route(
-    "/rollback/<int:model_id>",
+    "/<int:model_id>/rollback",
     methods=["POST"]
 )
-def rollback(
-    model_id
-):
+@jwt_required
+def rollback_model_route(current_user, model_id):
 
     db = SessionLocal()
 
     try:
 
-        model = rollback_model(
+        response, status = rollback_model(
             db,
+            current_user,
             model_id
         )
 
-        return jsonify({
-
-            "model_name":
-                model.model_name,
-
-            "version":
-                model.version,
-
-            "stage":
-                model.stage
-        })
-
-    except ValueError as e:
-
-        return jsonify({
-            "error":
-            str(e)
-        }), 404
+        return response, status
 
     finally:
 
         db.close()
 
 
-# Route to get the leaderboard of models based on a specific metric
+
 @registry_bp.route(
-    "/leaderboard/<string:model_name>",
+    "/<int:model_id>",
     methods=["GET"]
 )
-def leaderboard(
-    model_name
-):
-
-    metric_name = request.args.get(
-        "metric"
-    )
-
-    top_n = request.args.get(
-        "top",
-        type=int
-    )
-
-    if not metric_name:
-
-        return jsonify({
-            "error":
-            "metric required"
-        }), 400
-    
-    if top_n is not None and top_n <= 0:
-
-        return jsonify({
-            "error":
-            "top must be greater than 0"
-        }), 400
+@jwt_required
+def get_registered_model_route(current_user, model_id):
 
     db = SessionLocal()
 
     try:
 
-        result = get_leaderboard(
+        response, status = get_registered_model(
             db,
-            model_name,
-            metric_name,
-            top_n
+            current_user,
+            model_id
         )
 
-        return jsonify(
-            result
+        return response, status
+
+    finally:
+
+        db.close()
+
+
+
+@registry_bp.route(
+    "/project/<int:project_id>/history/<path:model_name>",
+    methods=["GET"]
+)
+@jwt_required
+def get_model_history_route(current_user, project_id, model_name):
+
+    db = SessionLocal()
+
+    try:
+
+        response, status = get_model_history(
+            db,
+            current_user,
+            project_id,
+            model_name
         )
+
+        return response, status
+
+    finally:
+
+        db.close()
+
+
+
+
+@registry_bp.route(
+    "/project/<int:project_id>/leaderboard/<path:model_name>",
+    methods=["GET"]
+)
+@jwt_required
+def get_model_leaderboard_route(
+    current_user,
+    project_id,
+    model_name
+):
+
+    db = SessionLocal()
+
+    try:
+
+        metric_name = request.args.get(
+            "metric",
+            "accuracy"
+        )
+
+        top_raw = request.args.get(
+            "top",
+            "3"
+        )
+
+        try:
+
+            top = int(top_raw)
+
+        except (TypeError, ValueError):
+
+            return {
+                "error": "top must be an integer."
+            }, 400
+
+        response, status = get_model_leaderboard(
+            db=db,
+            current_user=current_user,
+            project_id=project_id,
+            model_name=model_name,
+            metric_name=metric_name,
+            top=top
+        )
+
+        return response, status
 
     finally:
 

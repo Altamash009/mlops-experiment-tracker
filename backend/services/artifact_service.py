@@ -1,4 +1,6 @@
 import hashlib
+import time
+from pathlib import Path
 
 from models.artifact import Artifact
 from models.run import Run
@@ -226,3 +228,154 @@ def upload_artifact(db, current_user, run_id, file, artifact_type, description):
         }
 
     }, 201
+
+
+# Function to retrieve artifacts for a specific run, ensuring the user has access to the run
+def get_run_artifacts(db, current_user, run_id):
+
+    run = (
+        db.query(Run)
+        .join(Project)
+        .filter(
+            Run.run_id == run_id,
+            Project.user_id == current_user.user_id
+        )
+        .first()
+    )
+
+    if run is None:
+
+        return {
+            "error": "Run not found."
+        }, 404
+
+    artifacts = (
+        db.query(Artifact)
+        .filter(
+            Artifact.run_id == run_id
+        )
+        .order_by(
+            Artifact.uploaded_at.desc()
+        )
+        .all()
+    )
+
+    result = []
+
+    for artifact in artifacts:
+
+        result.append({
+            "artifact_id": artifact.artifact_id,
+            "artifact_name": artifact.artifact_name,
+            "artifact_type": artifact.artifact_type,
+            "description": artifact.description,
+            "storage_path": artifact.storage_path,
+            "file_size": artifact.file_size,
+            "checksum": artifact.checksum,
+            "uploaded_at": artifact.uploaded_at
+        })
+
+    return {
+        "run_id": run.run_id,
+        "run_name": run.run_name,
+        "total_artifacts": len(result),
+        "artifacts": result
+    }, 200
+
+
+# Function to generate a temporary download URL for an artifact, ensuring the user has access to the artifact
+def generate_artifact_download(db, current_user, artifact_id):
+
+    artifact = (
+        db.query(Artifact)
+        .join(Run)
+        .join(Project)
+        .filter(
+            Artifact.artifact_id == artifact_id,
+            Project.user_id == current_user.user_id
+        )
+        .first()
+    )
+
+    if artifact is None:
+
+        return {
+            "error": "Artifact not found."
+        }, 404
+
+    file_format = Path(
+        artifact.artifact_name
+    ).suffix.lstrip(".")
+
+    if not file_format:
+
+        return {
+            "error": "Artifact file format could not be determined."
+        }, 400
+
+    # URL valid for 10 minutes
+    expires_at = int(time.time()) + 600
+
+    download_url = storage.generate_download_url(
+        public_id=artifact.storage_path,
+        file_format=file_format,
+        expires_at=expires_at
+    )
+
+    return {
+        "artifact_id": artifact.artifact_id,
+        "artifact_name": artifact.artifact_name,
+        "expires_at": expires_at,
+        "download_url": download_url
+    }, 200
+
+
+# Function to delete an artifact, ensuring the user has access to the artifact and that the associated run is still running
+def delete_artifact(db, current_user, artifact_id):
+
+    artifact = (
+        db.query(Artifact)
+        .join(Run)
+        .join(Project)
+        .filter(
+            Artifact.artifact_id == artifact_id,
+            Project.user_id == current_user.user_id
+        )
+        .first()
+    )
+
+    if artifact is None:
+
+        return {
+            "error": "Artifact not found."
+        }, 404
+
+    run = artifact.run
+
+    if run.status != "RUNNING":
+
+        return {
+            "error": "Cannot delete artifacts. Run has already ended."
+        }, 400
+
+    try:
+
+        storage.delete(
+            public_id=artifact.storage_path,
+            resource_type="raw",
+            delivery_type="private"
+        )
+
+    except Exception:
+
+        return {
+            "error": "Failed to delete artifact from storage."
+        }, 500
+
+    db.delete(artifact)
+    db.commit()
+
+    return {
+        "message": "Artifact deleted successfully.",
+        "artifact_id": artifact_id
+    }, 200

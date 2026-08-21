@@ -4,7 +4,12 @@ from models.database import SessionLocal
 
 from utils.auth import jwt_required
 
-from services.artifact_service import upload_artifact
+from services.artifact_service import (
+    upload_artifact,
+    get_run_artifacts,
+    generate_artifact_download,
+    delete_artifact
+)
 
 
 artifacts_bp = Blueprint(
@@ -58,6 +63,83 @@ def upload_artifact_route(current_user):
             file=file,
             artifact_type=artifact_type,
             description=description
+        )
+
+        return response, status
+
+    finally:
+
+        db.close()
+
+
+
+@artifacts_bp.route(
+    "/run/<int:run_id>",
+    methods=["GET"]
+)
+@jwt_required
+def get_run_artifacts_route(current_user, run_id):
+
+    db = SessionLocal()
+
+    try:
+
+        response, status = get_run_artifacts(
+            db,
+            current_user,
+            run_id
+        )
+
+        return response, status
+
+    finally:
+
+        db.close()
+
+
+
+@artifacts_bp.route(
+    "/download/<int:artifact_id>",
+    methods=["GET"]
+)
+@jwt_required
+def download_artifact_route(
+    current_user,
+    artifact_id
+):
+
+    db = SessionLocal()
+
+    try:
+
+        response, status = generate_artifact_download(
+            db,
+            current_user,
+            artifact_id
+        )
+
+        return response, status
+
+    finally:
+
+        db.close()
+
+
+@artifacts_bp.route(
+    "/<int:artifact_id>",
+    methods=["DELETE"]
+)
+@jwt_required
+def delete_artifact_route(current_user, artifact_id):
+
+    db = SessionLocal()
+
+    try:
+
+        response, status = delete_artifact(
+            db,
+            current_user,
+            artifact_id
         )
 
         return response, status

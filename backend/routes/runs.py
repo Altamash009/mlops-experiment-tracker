@@ -8,7 +8,9 @@ from services.run_service import(
     start_run,
     end_run,
     get_project_runs,
-    get_run_details
+    get_run_details,
+    compare_runs,
+    get_best_run
 )
 
 runs_bp = Blueprint(
@@ -115,4 +117,60 @@ def get_run_details_route(current_user, run_id):
 
     finally:
 
+        db.close()
+
+
+
+@runs_bp.route(
+    "/compare",
+    methods=["POST"]
+)
+@jwt_required
+def compare_runs_route(current_user):
+
+    db = SessionLocal()
+
+    try:
+
+        data = request.get_json() or {}
+
+        response, status = compare_runs(
+            db,
+            current_user,
+            data
+        )
+
+        return response, status
+
+    finally:
+        db.close()
+
+
+
+@runs_bp.route(
+    "/project/<int:project_id>/best",
+    methods=["GET"]
+)
+@jwt_required
+def get_best_run_route(current_user, project_id):
+
+    db = SessionLocal()
+
+    try:
+
+        metric_name = request.args.get(
+            "metric",
+            "accuracy"
+        )
+
+        response, status = get_best_run(
+            db=db,
+            current_user=current_user,
+            project_id=project_id,
+            metric_name=metric_name
+        )
+
+        return response, status
+
+    finally:
         db.close()

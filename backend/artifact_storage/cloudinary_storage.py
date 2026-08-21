@@ -1,8 +1,10 @@
 import os
+import time
 
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+import cloudinary.utils
 
 from dotenv import load_dotenv
 
@@ -58,3 +60,19 @@ class CloudinaryStorage(BaseStorage):
         )
 
         return result
+    
+    def generate_download_url(
+        self,
+        public_id,
+        file_format,
+        expires_at,
+        resource_type="raw",
+        delivery_type="private"
+    ):
+        return cloudinary.utils.private_download_url(
+            public_id=public_id,
+            format=file_format,
+            resource_type=resource_type,
+            type=delivery_type,
+            expires_at=expires_at
+        )
