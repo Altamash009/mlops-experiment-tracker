@@ -1,170 +1,80 @@
-import Card from "../UI/Card";
-import SectionHeader from "../UI/SectionHeader";
-
 import {
-    Line
-} from "react-chartjs-2";
+  Chart as ChartJS,
+  CategoryScale, LinearScale, PointElement,
+  LineElement, Title, Tooltip, Legend, Filler
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
 
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Tooltip,
-    Legend,
-    Filler
-} from "chart.js";
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Tooltip,
-    Legend,
-    Filler
-);
-
-function AccuracyChart({ data }) {
-
-    const chartData = {
-        labels: data.map(item => `Run ${item.run_id}`),
-
-        datasets: [
-            {
-                label: "Accuracy",
-
-                data: data.map(item => item.value),
-
-                borderColor: "#2563EB",
-
-                backgroundColor: (context) => {
-
-                    const chart = context.chart;
-
-                    const { ctx, chartArea } = chart;
-
-                    if (!chartArea) return null;
-
-                    const gradient = ctx.createLinearGradient(
-                        0,
-                        chartArea.top,
-                        0,
-                        chartArea.bottom
-                    );
-
-                    gradient.addColorStop(0, "rgba(37,99,235,0.35)");
-                    gradient.addColorStop(1, "rgba(37,99,235,0)");
-
-                    return gradient;
-                },
-
-                fill: true,
-
-                borderWidth: 3,
-
-                tension: 0.45,
-
-                pointRadius: 5,
-
-                pointHoverRadius: 7,
-
-                pointBackgroundColor: "#2563EB",
-
-                pointBorderColor: "#ffffff",
-
-                pointBorderWidth: 2
-            }
-        ]
-    };
-
-    const options = {
-
-        responsive: true,
-
-        maintainAspectRatio: false,
-
-        plugins: {
-
-            legend: {
-                display: false
-            },
-
-            tooltip: {
-
-                backgroundColor: "#1E293B",
-
-                padding: 12,
-
-                cornerRadius: 10,
-
-                titleFont: {
-                    size: 14
-                },
-
-                bodyFont: {
-                    size: 13
-                }
-
-            }
-
-        },
-
-        scales: {
-
-            x: {
-
-                grid: {
-                    display: false
-                },
-
-                ticks: {
-                    color: "#64748B"
-                }
-
-            },
-
-            y: {
-
-                beginAtZero: false,
-
-                grid: {
-                    color: "#E2E8F0"
-                },
-
-                ticks: {
-                    color: "#64748B"
-                }
-
-            }
-
-        }
-
-    };
-
+export default function AccuracyChart({ data = [] }) {
+  if (!data.length) {
     return (
-
-        <Card>
-
-            <SectionHeader
-                title="Accuracy Trend"
-                subtitle="Model accuracy across experiment runs"
-            />
-
-            <div className="h-80">
-
-                <Line
-                    data={chartData}
-                    options={options}
-                />
-
-            </div>
-
-        </Card>
-
+      <div className="chart-card">
+        <div className="chart-title">Accuracy Trend</div>
+        <div className="chart-subtitle">Step-by-step accuracy across runs</div>
+        <div className="empty-state" style={{ padding: '32px 0' }}>
+          <div className="empty-icon">📈</div>
+          <div className="empty-title">No accuracy data yet</div>
+        </div>
+      </div>
     );
+  }
 
+  const labels  = data.map((d, i) => `Run ${d.run_id} · Step ${d.step}`);
+  const values  = data.map(d => parseFloat((d.value * 100).toFixed(2)));
+
+  const chartData = {
+    labels,
+    datasets: [{
+      label: 'Accuracy (%)',
+      data: values,
+      borderColor: '#f6821f',
+      backgroundColor: 'rgba(246,130,31,0.08)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 4,
+      pointBackgroundColor: '#f6821f',
+      pointBorderColor: '#0d1117',
+      pointBorderWidth: 2,
+      pointHoverRadius: 6,
+    }]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: true,
+    animation: { duration: 800, easing: 'easeInOutQuart' },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1c2333',
+        titleColor: '#e8eaf0',
+        bodyColor: '#8b93a7',
+        borderColor: 'rgba(255,255,255,0.07)',
+        borderWidth: 1,
+        padding: 12,
+        callbacks: { label: ctx => `Accuracy: ${ctx.parsed.y}%` }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#4b5263', font: { size: 10 }, maxTicksLimit: 6 }
+      },
+      y: {
+        min: 0, max: 100,
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#4b5263', font: { size: 10 }, callback: v => v + '%' }
+      }
+    }
+  };
+
+  return (
+    <div className="chart-card">
+      <div className="chart-title">Accuracy Trend</div>
+      <div className="chart-subtitle">Step-by-step accuracy across all runs</div>
+      <Line data={chartData} options={options} />
+    </div>
+  );
 }
-
-export default AccuracyChart;

@@ -7,41 +7,35 @@ module.exports = {
 
   theme: {
     extend: {
-
       colors: {
-
-        primary: "#2563EB",
-
-        secondary: "#1E293B",
-
-        accent: "#3B82F6",
-
-        success: "#22C55E",
-
-        warning: "#F59E0B",
-
-        danger: "#EF4444",
-
-        background: "#F8FAFC",
-
-        card: "#FFFFFF",
-
+        canvas: "#0a0a0a",
+        "canvas-soft": "#1a1c20",
+        "canvas-card": "#191919",
+        "canvas-mid": "#363a3f",
+        hairline: "#212327",
+        primary: "#ffffff",
+        ink: "#ffffff",
+        body: "#dadbdf",
+        "body-mid": "#7d8187",
+        accent: "#ff7a17",
+        "accent-sunset": "#ff7a17",
+        "accent-sunset-soft": "#ffc285",
+        "accent-dusk": "#7c3aed",
+        "accent-twilight": "#c4b5fd",
+        "accent-breeze": "#a0c3ec",
+        success: "#22c55e",
+        warning: "#f59e0b",
+        danger: "#ef4444",
       },
-
       boxShadow: {
-
-        card: "0 8px 24px rgba(15,23,42,.08)",
-
-        hover: "0 16px 32px rgba(15,23,42,.12)"
-
+        card: "none",
+        hover: "none",
       },
-
       borderRadius: {
-
-        card: "18px"
-
+        sm: "8px",
+        pill: "9999px",
+        card: "8px",
       }
-
     },
   },
 

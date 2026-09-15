@@ -8,6 +8,7 @@ from routes.parameters import parameters_bp
 from routes.metrics import metrics_bp
 from routes.artifacts import artifacts_bp
 from routes.model_registry import registry_bp
+from routes.dashboard import dashboard_bp
 
 app = Flask(__name__)
 
@@ -55,6 +56,11 @@ app.register_blueprint(
 app.register_blueprint(
     registry_bp,
     url_prefix="/registry"
+)
+
+app.register_blueprint(
+    dashboard_bp,
+    url_prefix="/dashboard"
 )
 
 @app.route("/")

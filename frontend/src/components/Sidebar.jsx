@@ -1,200 +1,84 @@
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
-    FaChartLine,
-    FaDatabase,
-    FaExchangeAlt,
-    FaProjectDiagram,
-    FaCube,
-    FaRocket
-} from "react-icons/fa";
-
-import { NavLink } from "react-router-dom";
-
-function Sidebar() {
-
-    const menu = [
-
-        {
-            name: "Dashboard",
-            icon: <FaChartLine />,
-            path: "/"
-        },
-
-        {
-            name: "Runs",
-            icon: <FaDatabase />,
-            path: "/runs"
-        },
-
-        {
-            name: "Compare",
-            icon: <FaExchangeAlt />,
-            path: "/compare"
-        },
-
-        {
-            name: "Registry",
-            icon: <FaProjectDiagram />,
-            path: "/registry"
-        },
-
-        {
-            name: "Artifacts",
-            icon: <FaCube />,
-            path: "/artifacts"
-        }
-
-    ];
-
-    return (
-
-        <aside className="w-72 bg-slate-900 text-white flex flex-col shadow-2xl">
-
-            {/* Logo */}
-
-            <div className="px-8 py-8 border-b border-slate-800">
-
-                <div className="flex items-center gap-4">
-
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-2xl shadow-lg">
-
-                        <FaRocket />
-
-                    </div>
-
-                    <div>
-
-                        <h1 className="text-2xl font-bold">
-
-                            MLOps Tracker
-
-                        </h1>
-
-                        <p className="text-slate-400 text-sm">
-
-                            Enterprise Edition
-
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            {/* Navigation */}
-
-            <nav className="flex-1 px-5 py-8">
-
-                <p className="text-xs uppercase tracking-widest text-slate-500 mb-4 px-3">
-
-                    Navigation
-
-                </p>
-
-                {
-
-                    menu.map(item => (
-
-                        <NavLink
-
-                            key={item.name}
-
-                            to={item.path}
-
-                            className={({ isActive }) =>
-
-                                `
-
-                                flex
-
-                                items-center
-
-                                gap-4
-
-                                px-4
-
-                                py-4
-
-                                rounded-2xl
-
-                                mb-3
-
-                                transition-all
-
-                                duration-300
-
-                                ${
-
-                                    isActive
-
-                                        ?
-
-                                        "bg-blue-600 shadow-lg"
-
-                                        :
-
-                                        "hover:bg-slate-800"
-
-                                }
-
-                                `
-
-                            }
-
-                        >
-
-                            <div className="text-xl">
-
-                                {item.icon}
-
-                            </div>
-
-                            <span className="font-medium">
-
-                                {item.name}
-
-                            </span>
-
-                        </NavLink>
-
-                    ))
-
-                }
-
-            </nav>
-
-            {/* Footer */}
-
-            <div className="p-5 border-t border-slate-800">
-
-                <div className="rounded-2xl bg-slate-800 p-4">
-
-                    <p className="text-sm text-slate-400">
-
-                        Backend Status
-
-                    </p>
-
-                    <div className="flex items-center gap-3 mt-2">
-
-                        <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-
-                        <span className="font-semibold">
-
-                            Connected
-
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </aside>
-
-    );
-
+  FaRocket, FaTachometerAlt, FaFolderOpen, FaDatabase,
+  FaExchangeAlt, FaBoxOpen, FaCube, FaSignOutAlt
+} from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+import ProjectSelector from './ProjectSelector';
+
+const NAV_ITEMS = [
+  { label: 'Dashboard',   icon: <FaTachometerAlt />, path: '/' },
+  { label: 'Projects',    icon: <FaFolderOpen />,   path: '/projects' },
+  { label: 'Runs',        icon: <FaDatabase />,      path: '/runs' },
+  { label: 'Compare',     icon: <FaExchangeAlt />,   path: '/compare' },
+  { label: 'Registry',    icon: <FaBoxOpen />,       path: '/registry' },
+  { label: 'Artifacts',   icon: <FaCube />,          path: '/artifacts' },
+];
+
+export default function Sidebar({ onNewProject }) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => { logout(); navigate('/login'); };
+
+  const initials = user?.name
+    ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    : 'ML';
+
+  return (
+    <aside className="app-sidebar animate-slideLeft">
+      {/* Logo */}
+      <div className="sidebar-logo">
+        <div className="sidebar-logo-icon float-slow">
+          <FaRocket />
+        </div>
+        <div className="sidebar-logo-text">
+          <h2>MLOps Tracker</h2>
+          <span>Telemetry v2.0</span>
+        </div>
+      </div>
+
+      {/* Project Selector */}
+      <ProjectSelector onCreateNew={onNewProject} />
+
+      {/* Navigation */}
+      <nav className="sidebar-nav">
+        <div className="sidebar-section-label">Telemetry Engine</div>
+        {NAV_ITEMS.map(item => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === '/'}
+            className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
+          >
+            <span className="link-icon">{item.icon}</span>
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* Footer: user + status */}
+      <div className="sidebar-footer">
+        {/* Backend status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 6px', marginBottom: 12 }}>
+          <span className="status-dot" />
+          <span style={{ fontSize: 11, color: 'var(--cf-text-muted)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 500 }}>
+            LIVE TELEMETRY
+          </span>
+        </div>
+
+        {/* User card */}
+        <div className="user-card">
+          <div className="user-avatar">{initials}</div>
+          <div className="user-info">
+            <div className="user-name">{user?.name || 'Engineer'}</div>
+            <div className="user-email">{user?.email || 'user@mlops.io'}</div>
+          </div>
+          <button className="logout-btn" onClick={handleLogout} title="Sign out">
+            <FaSignOutAlt />
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
 }
-
-export default Sidebar;

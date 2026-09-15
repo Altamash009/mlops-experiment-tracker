@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlops-tracker-sdk"
+version = "0.1.0"
+description = "Python SDK for the MLOps Experiment Tracker"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    { name = "Altamash Ansari" }
+]
+dependencies = [
+    "requests>=2.31",
+    "matplotlib>=3.8",
+    "scikit-learn>=1.4"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

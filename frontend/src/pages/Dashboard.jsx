@@ -1,246 +1,138 @@
-import Layout from "../components/Layout";
-import DashboardCard from "../components/DashboardCard";
-import RunsTable from "../components/RunsTable";
-
-import AccuracyChart from "../components/Analytics/AccuracyChart";
-import StatusChart from "../components/Analytics/StatusChart";
-import TopModels from "../components/Analytics/TopModels";
-
-import { useEffect, useState } from "react";
-
+import { useState, useEffect, useCallback } from 'react';
+import Layout from '../components/Layout';
+import DashboardCard from '../components/DashboardCard';
+import RunsTable from '../components/RunsTable';
+import AccuracyChart from '../components/Analytics/AccuracyChart';
+import StatusChart from '../components/Analytics/StatusChart';
+import TopModels from '../components/Analytics/TopModels';
+import HeroSection from '../components/UI/HeroSection';
+import { useAuth } from '../context/AuthContext';
+import { getDashboardSummary, getRecentRuns, getDashboardAnalytics } from '../services/api';
 import {
-    getDashboardSummary,
-    getRecentRuns,
-    getDashboardAnalytics,
-} from "../services/api";
+  FaDatabase, FaBoxOpen, FaCube, FaRocket,
+  FaSyncAlt, FaFolderOpen
+} from 'react-icons/fa';
 
-import {
-    FaDatabase,
-    FaProjectDiagram,
-    FaCube,
-    FaRocket,
-    FaSyncAlt
-} from "react-icons/fa";
+export default function Dashboard() {
+  const { selectedProjectId, selectedProjectName } = useAuth();
+  const [summary,   setSummary]   = useState(null);
+  const [runs,      setRuns]      = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState('');
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-function Dashboard() {
-
-    const [summary, setSummary] = useState(null);
-    const [runs, setRuns] = useState([]);
-    const [analytics, setAnalytics] = useState(null);
-
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-
-    async function loadDashboard() {
-
-        try {
-
-            setLoading(true);
-
-            const summaryData = await getDashboardSummary();
-            const recentRuns = await getRecentRuns();
-            const analyticsData = await getDashboardAnalytics();
-
-            setSummary(summaryData);
-            setRuns(recentRuns);
-            setAnalytics(analyticsData);
-
-            setError("");
-
-        }
-
-        catch {
-
-            setError("Failed to load dashboard.");
-
-        }
-
-        finally {
-
-            setLoading(false);
-
-        }
-
+  const load = useCallback(async () => {
+    if (!selectedProjectId) return;
+    setLoading(true); setError('');
+    try {
+      const [s, r, a] = await Promise.all([
+        getDashboardSummary(selectedProjectId),
+        getRecentRuns(selectedProjectId),
+        getDashboardAnalytics(selectedProjectId),
+      ]);
+      setSummary(s);
+      setRuns(Array.isArray(r.runs) ? r.runs : []);
+      setAnalytics(a);
+      setLastUpdated(new Date());
+    } catch (e) {
+      setError(e.response?.data?.error || 'Failed to load dashboard. Make sure the backend is running.');
+    } finally {
+      setLoading(false);
     }
+  }, [selectedProjectId]);
 
-    useEffect(() => {
+  useEffect(() => { load(); }, [load]);
 
-        loadDashboard();
+  const refreshBtn = (
+    <button
+      className="btn btn-secondary btn-sm"
+      onClick={load}
+      disabled={loading || !selectedProjectId}
+      id="dashboard-refresh-btn"
+    >
+      <FaSyncAlt style={{ fontSize: 12, ...(loading && { animation: 'spin 1s linear infinite' }) }} />
+      {loading ? 'Refreshing…' : 'Refresh'}
+    </button>
+  );
 
-    }, []);
-
-    if (loading) {
-
-        return (
-
-            <Layout>
-
-                <div className="flex justify-center items-center h-[70vh]">
-
-                    <div className="text-center">
-
-                        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-
-                        <p className="mt-5 text-slate-500 text-lg">
-
-                            Loading Dashboard...
-
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </Layout>
-
-        );
-
-    }
-
-    if (error) {
-
-        return (
-
-            <Layout>
-
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
-
-                    <h2 className="text-red-600 text-lg font-semibold">
-
-                        {error}
-
-                    </h2>
-
-                </div>
-
-            </Layout>
-
-        );
-
-    }
-
+  // No project selected
+  if (!selectedProjectId) {
     return (
-
-        <Layout>
-
-            {/* HEADER */}
-
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10">
-
-                <div>
-
-                    <h1 className="text-4xl font-bold text-slate-800">
-
-                        Dashboard
-
-                    </h1>
-
-                    <p className="text-slate-500 mt-2 text-lg">
-
-                        Monitor experiments, models and production deployments.
-
-                    </p>
-
-                </div>
-
-                <div className="flex items-center gap-4 mt-5 lg:mt-0">
-
-                    <span className="text-sm text-slate-500">
-
-                        Last Updated
-
-                        {" "}
-
-                        {new Date().toLocaleTimeString()}
-                    </span>
-
-                    <button
-                        onClick={loadDashboard}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl shadow transition-all duration-300"
-                    >
-
-                        <FaSyncAlt />
-
-                        Refresh
-
-                    </button>
-
-                </div>
-
+      <Layout title="Dashboard" actions={refreshBtn}>
+        <div className="card" style={{ marginTop: 40 }}>
+          <div className="empty-state">
+            <div className="empty-icon"><FaFolderOpen /></div>
+            <div className="empty-title">No Project Selected</div>
+            <div className="empty-subtitle">
+              Use the project selector in the sidebar to select or create a project to view its dashboard.
             </div>
-
-            {/* SUMMARY CARDS */}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-
-                <DashboardCard
-                    title="Total Runs"
-                    value={summary.total_runs}
-                    icon={<FaDatabase />}
-                    color="text-blue-600"
-                />
-
-                <DashboardCard
-                    title="Registered Models"
-                    value={summary.registered_models}
-                    icon={<FaProjectDiagram />}
-                    color="text-green-600"
-                />
-
-                <DashboardCard
-                    title="Artifacts"
-                    value={summary.artifacts}
-                    icon={<FaCube />}
-                    color="text-purple-600"
-                />
-
-                <DashboardCard
-                    title="Production Models"
-                    value={summary.production_models}
-                    icon={<FaRocket />}
-                    color="text-red-600"
-                />
-
-            </div>
-
-            {/* RECENT RUNS */}
-
-            <div className="mt-10">
-
-                <RunsTable runs={runs} />
-
-            </div>
-
-            {/* ANALYTICS */}
-
-            {
-
-                analytics && (
-
-                    <div className="mt-10 grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-                        <AccuracyChart
-                            data={analytics.metric_trends.accuracy}
-                        />
-
-                        <StatusChart
-                            data={analytics.status_distribution}
-                        />
-
-                        <TopModels
-                            models={analytics.top_models}
-                        />
-
-                    </div>
-
-                )
-
-            }
-
-        </Layout>
-
+          </div>
+        </div>
+      </Layout>
     );
+  }
 
+  return (
+    <Layout
+      title={selectedProjectName || 'Dashboard'}
+      subtitle={lastUpdated ? `Last updated ${lastUpdated.toLocaleTimeString()}` : undefined}
+      actions={refreshBtn}
+    >
+      {/* Error */}
+      {error && <div className="alert alert-error">{error}</div>}
+
+      {/* Loading skeleton */}
+      {loading && !summary && (
+        <div className="loading-overlay">
+          <div className="spinner" />
+          <span>Loading dashboard…</span>
+        </div>
+      )}
+
+      {summary && (
+        <>
+          {/* ── HERO BANNER ────────────────────────────── */}
+          <HeroSection
+            projectName={selectedProjectName}
+            summary={summary}
+            bestAccuracy={
+              analytics?.top_models?.[0]?.accuracy ??
+              (analytics?.metric_trends?.accuracy?.length
+                ? Math.max(...analytics.metric_trends.accuracy.map(a => a.value))
+                : null)
+            }
+          />
+
+          {/* ── STAT CARDS ─────────────────────────────── */}
+          <div className="grid-4 stagger" style={{ marginBottom: 32 }}>
+            <DashboardCard title="Total Runs"        value={summary.total_runs}         icon={<FaDatabase />} color="blue"   delay={0}   sub={summary.running_runs > 0 ? `${summary.running_runs} running` : 'None active'} />
+            <DashboardCard title="Registered Models" value={summary.registered_models}  icon={<FaBoxOpen />}  color="orange" delay={60}  sub={summary.latest_model ? `Latest: ${summary.latest_model}` : undefined} />
+            <DashboardCard title="Artifacts"         value={summary.artifacts}           icon={<FaCube />}     color="purple" delay={120} />
+            <DashboardCard title="In Production"     value={summary.production_models}   icon={<FaRocket />}   color="green"  delay={180} sub="Production stage models" />
+          </div>
+
+          {/* ── RECENT RUNS ─────────────────────────────── */}
+          <div style={{ marginBottom: 32 }}>
+            <div className="page-header" style={{ marginBottom: 16 }}>
+              <div>
+                <div className="chart-title" style={{ fontSize: 16 }}>Recent Runs</div>
+                <div className="chart-subtitle">Last 10 experiment runs • Click a row to expand details</div>
+              </div>
+            </div>
+            <RunsTable runs={runs} />
+          </div>
+
+          {/* ── ANALYTICS CHARTS ─────────────────────────── */}
+          {analytics && (
+            <div className="grid-3">
+              <AccuracyChart data={analytics.metric_trends?.accuracy || []} />
+              <StatusChart   data={analytics.status_distribution || {}} />
+              <TopModels     models={analytics.top_models || []} />
+            </div>
+          )}
+        </>
+      )}
+    </Layout>
+  );
 }
-
-export default Dashboard;

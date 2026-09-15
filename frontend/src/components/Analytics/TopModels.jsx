@@ -1,190 +1,70 @@
-import Card from "../UI/Card";
-import SectionHeader from "../UI/SectionHeader";
-import ProgressBar from "../UI/ProgressBar";
+import StatusBadge from '../StatusBadge';
 
-function TopModels({ models }) {
-
+export default function TopModels({ models = [] }) {
+  if (!models.length) {
     return (
-
-        <Card>
-
-            <SectionHeader
-                title="Top Performing Models"
-                subtitle="Highest accuracy across registered models"
-            />
-
-            {
-
-                models.length === 0 ?
-
-                (
-
-                    <div className="h-72 flex flex-col justify-center items-center">
-
-                        <div className="text-5xl mb-4">
-
-                            🤖
-
-                        </div>
-
-                        <h3 className="text-xl font-semibold text-slate-700">
-
-                            No Models Found
-
-                        </h3>
-
-                        <p className="text-slate-500 mt-2">
-
-                            Register a model to see the leaderboard.
-
-                        </p>
-
-                    </div>
-
-                )
-
-                :
-
-                (
-
-                    <div className="space-y-6">
-
-                        {
-
-                            models.map((model, index) => {
-
-                                const medals = [
-
-                                    "🥇",
-
-                                    "🥈",
-
-                                    "🥉"
-
-                                ];
-
-                                return (
-
-                                    <div
-
-                                        key={`${model.model_name}-${model.version}`}
-
-                                        className="
-                                            p-5
-                                            rounded-2xl
-                                            border
-                                            border-slate-200
-                                            hover:border-blue-300
-                                            hover:shadow-lg
-                                            transition-all
-                                            duration-300
-                                        "
-
-                                    >
-
-                                        <div className="flex justify-between items-start">
-
-                                            <div className="flex items-center gap-4">
-
-                                                <div
-                                                    className="
-                                                        w-12
-                                                        h-12
-                                                        rounded-xl
-                                                        bg-slate-100
-                                                        flex
-                                                        items-center
-                                                        justify-center
-                                                        text-2xl
-                                                    "
-                                                >
-
-                                                    {
-
-                                                        medals[index] || "🏅"
-
-                                                    }
-
-                                                </div>
-
-                                                <div>
-
-                                                    <h3 className="text-lg font-bold text-slate-800">
-
-                                                        {model.model_name}
-
-                                                    </h3>
-
-                                                    <div className="flex items-center gap-2 mt-2">
-
-                                                        <span
-                                                            className="
-                                                                px-3
-                                                                py-1
-                                                                rounded-full
-                                                                bg-blue-100
-                                                                text-blue-700
-                                                                text-xs
-                                                                font-semibold
-                                                            "
-                                                        >
-
-                                                            Version {model.version}
-
-                                                        </span>
-
-                                                    </div>
-
-                                                </div>
-
-                                            </div>
-
-                                            <div className="text-right">
-
-                                                <p className="text-3xl font-bold text-blue-600">
-
-                                                    {model.accuracy.toFixed(2)}%
-
-                                                </p>
-
-                                                <p className="text-xs text-slate-500 mt-1">
-
-                                                    Accuracy
-
-                                                </p>
-
-                                            </div>
-
-                                        </div>
-
-                                        <div className="mt-5">
-
-                                            <ProgressBar
-
-                                                value={model.accuracy}
-
-                                            />
-
-                                        </div>
-
-                                    </div>
-
-                                );
-
-                            })
-
-                        }
-
-                    </div>
-
-                )
-
-            }
-
-        </Card>
-
+      <div className="chart-card">
+        <div className="chart-title">Top Models</div>
+        <div className="chart-subtitle">Best performing registered models</div>
+        <div className="empty-state" style={{ padding: '32px 0' }}>
+          <div className="empty-icon">🏆</div>
+          <div className="empty-title">No models registered yet</div>
+        </div>
+      </div>
     );
+  }
 
+  const max = Math.max(...models.map(m => m.accuracy || 0), 0.01);
+
+  return (
+    <div className="chart-card">
+      <div className="chart-title">Top Models</div>
+      <div className="chart-subtitle">Ranked by accuracy — top {models.length}</div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
+        {models.map((model, i) => {
+          const pct = ((model.accuracy || 0) / max) * 100;
+          return (
+            <div key={i} className="animate-fadeIn" style={{ animationDelay: `${i * 80}ms` }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{
+                    width: 20, height: 20, borderRadius: 6,
+                    background: i === 0 ? 'var(--cf-orange-dim)' : 'var(--cf-surface)',
+                    color: i === 0 ? 'var(--cf-orange)' : 'var(--cf-text-muted)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, fontWeight: 700
+                  }}>
+                    {i + 1}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--cf-text-primary)' }}>
+                    {model.model_name}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--cf-text-muted)' }}>v{model.version}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <StatusBadge status={model.stage} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--cf-orange)', minWidth: 44, textAlign: 'right' }}>
+                    {((model.accuracy || 0) * 100).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+              {/* Bar */}
+              <div style={{ height: 5, background: 'var(--cf-surface)', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${pct}%`,
+                  background: i === 0
+                    ? 'linear-gradient(90deg, var(--cf-orange), #f6a21f)'
+                    : 'linear-gradient(90deg, var(--cf-blue), #60a5fa)',
+                  borderRadius: 99,
+                  transition: 'width 0.8s ease',
+                }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
-
-export default TopModels;
