@@ -1,8 +1,6 @@
-import { useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import IntroAnimation from './components/IntroAnimation';
 
 import Login     from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -33,29 +31,12 @@ function AppRoutes() {
 }
 
 function App() {
-  // Show intro once per session (clears on tab close)
-  const [showIntro, setShowIntro] = useState(
-    () => !sessionStorage.getItem('mlops_intro_seen')
-  );
-
-  const handleIntroComplete = useCallback(() => {
-    sessionStorage.setItem('mlops_intro_seen', '1');
-    setShowIntro(false);
-  }, []);
-
   return (
     <ThemeProvider>
       <AuthProvider>
-        {/* Full-screen 3-D Blender intro */}
-        {showIntro && (
-          <IntroAnimation onComplete={handleIntroComplete} />
-        )}
-        {/* Main app renders beneath; hidden until intro completes */}
-        <div style={{ visibility: showIntro ? 'hidden' : 'visible' }}>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </div>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>
   );
