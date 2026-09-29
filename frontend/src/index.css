@@ -1512,17 +1512,39 @@ tbody td {
 .hero-content {
   position: relative;
   z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 32px;
 }
 
-@media (max-width: 900px) {
-  .hero-content {
-    flex-direction: column;
-    align-items: flex-start;
+.hero-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 28px;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 960px) {
+  .hero-grid-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
+}
+
+.hero-3d-panel {
+  position: relative;
+  height: 340px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--cf-border);
+  background: #090d16;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .hero-3d-panel {
+  background: #0b0f19;
+  border-color: rgba(15, 23, 42, 0.15);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12), inset 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
 .hero-tag {
