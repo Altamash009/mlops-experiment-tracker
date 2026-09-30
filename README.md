@@ -1,85 +1,79 @@
 # 🚀 MLOps Experiment Tracker
 
-A production-inspired MLOps Experiment Tracking Platform built with **Flask, SQLAlchemy, PostgreSQL (Neon), and React**.
+A production-inspired MLOps Experiment Tracking Platform built with **Flask, SQLAlchemy, PostgreSQL (Neon), Cloudinary, and React with 3D Visualizations**.
 
-This platform enables Machine Learning engineers and Data Scientists to track experiments, log parameters and metrics, manage artifacts, register models, compare runs, and monitor model performance through a modern dashboard.
+This platform enables Machine Learning engineers and Data Scientists to track experiments, log parameters and metrics, manage artifacts in the cloud, register models, compare runs, and monitor model performance through an interactive, modern dashboard with 3D graphics and theme support.
 
 ---
 
 ## ✨ Features
 
+### ✅ User Authentication & Security
+- Secure user registration and login using JWT authentication
+- Password hashing with Bcrypt
+- Protected frontend routes and session management
+
+### ✅ Project Management
+- Organize runs and experiments across multiple projects
+- Dynamic project switcher and project-level summary stats
+
 ### ✅ Experiment Tracking
-- Start and end experiment runs
-- Track run status (Running, Finished, Failed)
-- Automatic timestamps
-- Experiment history
+- Start, log, and end experiment runs
+- Track run status (`Running`, `Finished`, `Failed`)
+- Automatic timestamps and execution metadata
+- Detailed run history and breakdown
 
-### ✅ Parameter Logging
-- Log hyperparameters
-- Retrieve parameters for any run
-- Validation and duplicate handling
+### ✅ Parameter & Metric Logging
+- Log hyperparameter configurations
+- Continuous metric logging (e.g., loss, accuracy over epochs)
+- Visual metric charts and progress indicators
+- Comparative metric views across runs
 
-### ✅ Metric Logging
-- Log training and evaluation metrics
-- Store multiple metrics per experiment
-- Compare metrics across runs
+### ✅ Artifact Management & Cloud Storage
+- Cloud artifact storage integrated with Cloudinary
+- Upload model files, plots, datasets, and check logs
+- Download artifacts with version control and checksum support
 
-### ✅ Artifact Management
-- Upload experiment artifacts
-- Versioned artifacts
-- Download latest artifact
-- Download artifact by version
-- Checksum support
-- Future-ready storage abstraction (Local → S3/Cloud)
+### ✅ Model Registry & Leaderboards
+- Register trained models with stage transitions (`Development`, `Staging`, `Production`)
+- Promote or rollback production model versions
+- Performance leaderboards based on evaluation metrics
 
-### ✅ Model Registry
-- Register trained models
-- Version management
-- Development / Staging / Production stages
-- Production promotion
-- Production history
-- Leaderboard based on evaluation metrics
+### ✅ Experiment Comparison & Analytics
+- Multi-run comparison side-by-side
+- Automatic selection and highlighting of best-performing runs
+- Analytics charts (Status distributions, accuracy comparisons, top models)
 
-### ✅ Experiment Comparison
-- Compare multiple experiment runs
-- Best run selection
-- Analytics endpoints
+### ✅ Modern 3D Interactive React Dashboard
+- Built with React 19, Tailwind CSS, Chart.js, and Three.js / React Three Fiber
+- Interactive 3D visual scenes and responsive UI components
+- Light / Dark theme support and custom animations
 
 ### ✅ Python SDK
-- Start experiments
-- Log parameters
-- Log metrics
-- Upload artifacts
-- End experiments
-
-### 🚧 Dashboard (In Progress)
-- React Dashboard
-- Charts
-- Model Registry UI
-- Artifact Explorer
-- Leaderboards
-- Run Comparison UI
+- Lightweight SDK to integrate into Python ML workflows easily
+- Log parameters, metrics, and upload artifacts programmatically
 
 ---
 
 # 🏗️ Architecture
 
 ```
-                React Dashboard
-                       │
-                 Axios REST API
-                       │
-                Flask Backend
-                       │
-        ┌──────────────┼──────────────┐
-        │              │              │
-      Routes        Services      Python SDK
-        │              │
-        └──────────────┼──────────────┘
-                       │
+                 React Dashboard (3D & Tailwind)
+                        │
+                 Axios REST API (JWT Auth)
+                        │
+                  Flask Backend
+                        │
+        ┌───────────────┼───────────────┐
+        │               │               │
+     Routes         Services        Python SDK
+        │               │
+        └───────────────┼───────────────┘
+                        │
                  SQLAlchemy ORM
-                       │
-               Neon PostgreSQL
+                 ┌──────┴──────┐
+                 │             │
+          Neon PostgreSQL  Cloudinary
 ```
 
 ---
@@ -87,30 +81,32 @@ This platform enables Machine Learning engineers and Data Scientists to track ex
 # 📂 Project Structure
 
 ```
-mlops-experiment-tracker/
+mlops-tracker/
 
 ├── backend/
 │   ├── app.py
 │   ├── config.py
-│   ├── models/
-│   ├── routes/
-│   ├── services/
-│   ├── sdk/
-│   ├── tests/
-│   ├── uploads/
-│   ├── artifacts_storage/
+│   ├── create_tables.py
+│   ├── models/           # User, Project, Run, Metric, Parameter, Artifact, ModelRegistry
+│   ├── routes/           # Auth, Projects, Runs, Parameters, Metrics, Artifacts, Registry, Dashboard
+│   ├── services/         # Cloudinary & Business Logic
+│   ├── sdk/              # Python SDK Tracker
 │   ├── requirements.txt
 │   └── .env
 │
 ├── frontend/
 │   ├── public/
 │   ├── src/
+│   │   ├── components/   # 3D Scenes, Charts, Modals, Navigation
+│   │   ├── context/      # AuthContext, ThemeContext
+│   │   ├── pages/        # Login, Projects, Dashboard, Runs, Artifacts, Registry, Compare
+│   │   ├── services/     # Axios API Client
+│   │   └── App.js
 │   ├── package.json
-│   └── package-lock.json
+│   └── tailwind.config.js
 │
 ├── README.md
-├── LICENSE
-└── .gitignore
+└── LICENSE
 ```
 
 ---
@@ -118,82 +114,78 @@ mlops-experiment-tracker/
 # 🛠️ Tech Stack
 
 ## Backend
-
-- Python
-- Flask
-- SQLAlchemy
-- PostgreSQL
-- Neon Database
-- REST API
+- **Framework:** Python, Flask
+- **Database ORM:** SQLAlchemy
+- **Database:** PostgreSQL (Hosted on Neon)
+- **Cloud Storage:** Cloudinary
+- **Authentication:** PyJWT, Bcrypt
 
 ## Frontend
+- **Library:** React 19, React Router DOM
+- **Styling:** Tailwind CSS, React Icons
+- **3D Graphics:** Three.js, `@react-three/fiber`, `@react-three/drei`
+- **Charts:** Chart.js, `react-chartjs-2`
+- **HTTP Client:** Axios
 
-- React
-- Axios
-- React Router
-- Chart.js
-
-## Database
-
-- PostgreSQL (Neon)
-
-## SDK
-
-- Python SDK
+## Python SDK
+- Published / Installable Python SDK for experiment tracking from Jupyter notebooks or training scripts.
 
 ---
 
-# 📊 Database Design
+# 📊 Database Schema
 
-Current database contains the following tables:
-
-- Runs
-- Parameters
-- Metrics
-- Artifacts
-- Model Registry
+The database contains the following tables:
+- **Users**: User authentication and account profiles
+- **Projects**: Project containers for experiment organization
+- **Runs**: Individual experiment run executions
+- **Parameters**: Hyperparameter key-value logs per run
+- **Metrics**: Metric key-value logs over time/epochs per run
+- **Artifacts**: File assets and model weights (Cloudinary metadata & URLs)
+- **Model Registry**: Registered model versions and stage deployments
 
 ---
 
-# 🔌 REST APIs
+# 🔌 REST API Endpoints
+
+### Auth
+- `POST /auth/register` - User Registration
+- `POST /auth/login` - User Login
+
+### Projects
+- `GET /projects` - List all projects
+- `POST /projects/create` - Create a project
+- `PUT /projects/<id>` - Update project
+- `DELETE /projects/<id>` - Delete project
+
+### Dashboard & Analytics
+- `GET /dashboard/summary` - Project summary statistics
+- `GET /dashboard/recent-runs` - Recent experiment runs
+- `GET /dashboard/analytics` - Aggregated charts data
 
 ### Runs
+- `POST /runs/start` - Start run
+- `POST /runs/end` - End run
+- `GET /runs/project/<project_id>` - Get runs by project
+- `GET /runs/<run_id>` - Get run details
+- `POST /runs/compare` - Compare multiple runs
+- `GET /runs/project/<project_id>/best` - Fetch best run by metric
 
-- Start Run
-- End Run
-- Get All Runs
-- Get Run by ID
-
-### Parameters
-
-- Log Parameters
-- Get Parameters
-
-### Metrics
-
-- Log Metrics
-- Get Metrics
+### Parameters & Metrics
+- `POST /parameters/log` & `GET /parameters/run/<run_id>`
+- `POST /metrics/log` & `GET /metrics/run/<run_id>`
 
 ### Artifacts
-
-- Upload Artifact
-- Download Latest Artifact
-- Download Artifact by Version
-- List Artifacts
+- `POST /artifacts/upload` - Upload artifact to Cloudinary
+- `GET /artifacts/run/<run_id>` - List artifacts for a run
+- `GET /artifacts/download/<artifact_id>` - Get artifact download link
+- `DELETE /artifacts/<artifact_id>` - Delete artifact
 
 ### Model Registry
-
-- Register Model
-- Promote Model
-- Production Model
-- Registry History
-- Leaderboard
-
-### Analytics
-
-- Compare Runs
-- Best Run
-- Experiment Statistics
+- `POST /registry/register` - Register a model
+- `POST /registry/<id>/promote` - Promote model stage
+- `POST /registry/<id>/rollback` - Rollback model stage
+- `GET /registry/project/<project_id>` - List registered models
+- `GET /registry/project/<project_id>/leaderboard/<model_name>` - Model leaderboard
 
 ---
 
@@ -202,12 +194,13 @@ Current database contains the following tables:
 ```python
 from sdk.tracker import ExperimentTracker
 
-tracker = ExperimentTracker()
+tracker = ExperimentTracker(api_url="http://127.0.0.1:5000", project_id=1)
 
-tracker.start_run("HerbAI")
+tracker.start_run("ResNet50 Training")
 
 tracker.log_param("learning_rate", 0.001)
 tracker.log_param("epochs", 20)
+tracker.log_param("batch_size", 32)
 
 tracker.log_metric("accuracy", 0.96)
 tracker.log_metric("loss", 0.11)
@@ -219,87 +212,78 @@ tracker.end_run()
 
 ---
 
-# 🚀 Getting Started
+# 🚀 Getting Started (Local Development)
 
-## Clone Repository
-
-```bash
-git clone https://github.com/Altamash009/mlops-experiment-tracker.git
-```
+## Prerequisites
+- **Python 3.10+**
+- **Node.js 18+ & npm**
+- **PostgreSQL Database** (or Neon Postgres URI)
 
 ---
 
-## Backend
+## 1. Backend Setup
 
 ```bash
+# Navigate to backend directory
 cd backend
 
+# Create virtual environment
 python -m venv venv
 
+# Activate virtual environment
+# Windows:
 venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
 
+# Install dependencies
 pip install -r requirements.txt
 
+# Create .env file with your credentials
+# (DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, SECRET_KEY, CLOUDINARY_*)
+
+# Initialize database tables
+python create_tables.py
+
+# Run the Flask development server
 python app.py
 ```
 
-Backend runs on:
-
-```
-http://127.0.0.1:5000
-```
+Backend will run on `http://127.0.0.1:5000`.
 
 ---
 
-## Frontend
+## 2. Frontend Setup
 
 ```bash
+# Navigate to frontend directory
 cd frontend
 
+# Install dependencies
 npm install
 
+# Start the React development server
 npm start
 ```
 
-Frontend runs on:
-
-```
-http://localhost:3000
-```
+Frontend will run on `http://localhost:3000`.
 
 ---
 
-# 📌 Current Progress
+# 📌 Project Status
 
 | Module | Status |
 |---------|--------|
 | Backend APIs | ✅ Complete |
-| PostgreSQL Integration | ✅ Complete |
+| Database & ORM (PostgreSQL) | ✅ Complete |
+| User Authentication (JWT) | ✅ Complete |
+| Project Management | ✅ Complete |
 | Experiment Tracking | ✅ Complete |
-| Parameter Logging | ✅ Complete |
-| Metric Logging | ✅ Complete |
-| Artifact Management | ✅ Complete |
-| Model Registry | ✅ Complete |
+| Parameter & Metric Logging | ✅ Complete |
+| Cloud Artifact Storage (Cloudinary) | ✅ Complete |
+| Model Registry & Leaderboards | ✅ Complete |
 | Python SDK | ✅ Complete |
-| React Dashboard | 🚧 In Progress |
-| Docker Deployment | ⏳ Planned |
-| Cloud Artifact Storage | ⏳ Planned |
-| Authentication | ⏳ Planned |
-
----
-
-# 🌟 Future Improvements
-
-- Docker Deployment
-- AWS S3 Artifact Storage
-- User Authentication
-- Team Workspaces
-- Role-Based Access Control
-- Model Serving APIs
-- Kubernetes Deployment
-- CI/CD Pipeline
-- Docker Compose
-- Redis Caching
+| Modern 3D React Dashboard | ✅ Complete |
 
 ---
 
@@ -312,7 +296,4 @@ This project is licensed under the MIT License.
 # 👨‍💻 Author
 
 **Mohd Altamash**
-
-B.Tech Computer Science (Data Science & Artificial Intelligence)
-
-GitHub: https://github.com/Altamash009
+- GitHub: [https://github.com/Altamash009](https://github.com/Altamash009)
